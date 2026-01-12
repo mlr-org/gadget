@@ -36,14 +36,15 @@ EffectStrategy = R6::R6Class(
   ),
   private = list(
     fit_tree_internal = function(tree, Z, Y, grid, objective_value_root_j, objective_value_root) {
-      parent = Node$new(
+      # Create new tree
+      tree$root = Node$new(
         id = 1, depth = 1, subset_idx = seq_len(nrow(Z)), grid = grid,
         objective_value_parent = NA, objective_value = objective_value_root, int_imp_j = NULL,
         objective_value_j = objective_value_root_j, improvement_met = FALSE, int_imp = NULL,
         strategy = self
       )
       t_regional = system.time({
-        parent$split_node(
+        tree$root$split_node(
           Z = Z, Y = Y,
           objective_value_root_j = objective_value_root_j,
           objective_value_root = objective_value_root,
@@ -53,7 +54,6 @@ EffectStrategy = R6::R6Class(
           depth = 1,
           max_depth = tree$n_split + 1
         )
-        tree$root = parent
       })[["elapsed"]]
       t_regional
     }

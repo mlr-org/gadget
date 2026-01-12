@@ -90,5 +90,7 @@ prepare_split_data_ale = function(
     )
   }
 
+  # TO DO: Is the following necessary? If so, where to put it?
+  checkmate::assert(ncol(Z)==length(effect), nrow(Z)>n.intervals)
   list(Z = Z, Y = effect)
 }
