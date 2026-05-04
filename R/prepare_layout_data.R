@@ -43,7 +43,7 @@ prepare_layout_data = function(tree) {
   }
 
   for (i in layout$node_id) {
-    path_conditions = c()
+    path_conditions = character(0)
     current = layout[layout$node_id == i, ]
     while (!is.na(current$id_parent)) {
       parent = layout[layout$node_id == current$id_parent, ]

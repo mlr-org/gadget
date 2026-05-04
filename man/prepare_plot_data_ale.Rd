@@ -33,3 +33,17 @@ Given effect (from \code{calculate_ale}), idx (row indices or list of such), fea
 mean_center: subsets ALE rows by idx; calls \code{mean_center_ale} per feature for cumulative and optional centering.
 Returns named list of \code{mean_effect} data.tables (or nested list if idx is list).
 }
+\details{
+Rows are subset with \code{effect[[feat]][row_id \%in\% idx]} when \code{idx} is non-\code{NULL}.
+
+\code{mean_center_ale()} builds plot grids from aggregated intervals: means sample-wise \code{d_l}
+within each \code{(interval_index, x_left, x_right)} group (\code{delta_aggr}), cumulates, then
+optionally subtracts a weighted scalar \code{f_j0}. Sample-wise \code{d_l == 0} is mapped to
+\code{NA} before aggregation so exact zeros do not enter group means.
+
+For categorical features, each row of \code{mean_effect} corresponds to one row of
+\code{delta_aggr}; \code{x_grid} uses \code{as.character(delta_aggr$x_left)}, so the number of
+plotted points follows the number of distinct aggregated intervals after subsetting (not always one
+row per factor level). Factor \code{x_grid} still carries full \code{levels(feat_val)} for axis
+ordering.
+}

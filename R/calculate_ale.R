@@ -40,6 +40,11 @@
 #' Sample-level columns (\code{row_id}, \code{feat_val}, \code{d_l}, etc.)
 #' support subsetting by node and downstream heterogeneity calculation.
 #'
+#' Downstream plotting (\code{\link{prepare_plot_data_ale}}) aggregates these rows by
+#' \code{(interval_index, x_left, x_right)}, cumulates \code{d_l}, and optionally mean-centers the
+#' cumulative curve; plot grids for categories derive from aggregated \code{x_left} values, not by
+#' re-evaluating \code{calculate_ale}.
+#'
 #' @keywords internal
 calculate_ale = function(model, data, feature_set, target_feature_name, n_intervals = 10, predict_fun = NULL) {
   checkmate::assert_data_frame(data, .var.name = "data")
@@ -55,13 +60,21 @@ calculate_ale = function(model, data, feature_set, target_feature_name, n_interv
   } else {
     X = data[, setdiff(colnames(data), target_feature_name), drop = FALSE]
   }
+  X_dt = data.table::as.data.table(X)
+  n_rows = nrow(X_dt)
+  stacked_shared = data.table::rbindlist(list(X_dt, X_dt), use.names = TRUE)
+  idx_lower = seq_len(n_rows)
+  idx_upper = seq.int(n_rows + 1L, 2L * n_rows)
+
   eff_list = lapply(feature_set, function(feat) {
     if (is.factor(data[[feat]])) {
-      ale_categorical_feature(model = model, data = data, X = X,
-        feature = feat, target_feature_name = target_feature_name, predict_fun = predict_fun)
+      ale_categorical_feature(model = model, data = data, X = X_dt,
+        feature = feat, predict_fun = predict_fun,
+        stacked = stacked_shared, idx_lower = idx_lower, idx_upper = idx_upper)
     } else {
-      ale_numeric_feature(model = model, data = data, X = X,
-        feature = feat, target_feature_name = target_feature_name, n_intervals = n_intervals, predict_fun = predict_fun)
+      ale_numeric_feature(model = model, data = data, X = X_dt,
+        feature = feat, n_intervals = n_intervals, predict_fun = predict_fun,
+        stacked = stacked_shared, idx_lower = idx_lower, idx_upper = idx_upper)
     }
   })
   names(eff_list) = feature_set
@@ -87,39 +100,41 @@ calculate_ale = function(model, data, feature_set, target_feature_name, n_interv
 #'
 #' @return (`data.table()`) \cr
 #'   ALE data with \code{row_id}, \code{feat_val}, \code{d_l}, \code{interval_index}, etc.
+#' @param stacked (`NULL` or [data.table::data.table()]) \cr
+#'   Shared \code{2n}-row design matrix; omit to allocate internally.
+#' @param idx_lower, idx_upper (`integer()` or \code{NULL}) \cr
+#'   Lower/upper half row indices inside \code{stacked}.
 #' @keywords internal
-ale_numeric_feature = function(model, data, X, feature, target_feature_name, n_intervals = 10, predict_fun = NULL) {
+ale_numeric_feature = function(model, data, X, feature, n_intervals = 10, predict_fun = NULL,
+  stacked = NULL, idx_lower = NULL, idx_upper = NULL) {
   x_num = data[[feature]]
   n_rows = nrow(data)
-  # If constant or all NA: return minimal DT
-  if (length(unique(na.omit(x_num))) <= 1L) {
-    return(data.table::data.table(
-      row_id         = seq_len(n_rows),
-      feat_val       = x_num,
-      x_left         = x_num,
-      x_right        = x_num,
-      d_l             = 0,
-      interval_index = 1L,
-      int_n          = length(x_num),
-      int_s1         = 0,
-      int_s2         = 0
-    ))
+  if (is.null(stacked)) {
+    xd = data.table::as.data.table(X)
+    stacked = data.table::rbindlist(list(xd, xd), use.names = TRUE)
+    idx_lower = seq_len(n_rows)
+    idx_upper = seq.int(n_rows + 1L, 2L * n_rows)
   }
-  # Quantile-based interval boundaries
+
+  if (length(unique(na.omit(x_num))) <= 1L) {
+    return(ale_zero(feat_val = x_num))
+  }
   q = stats::quantile(x_num, 0:n_intervals / n_intervals, type = 7, na.rm = TRUE)
+  if (length(unique(q)) < 2L) {
+    return(ale_zero(feat_val = x_num))
+  }
   interval_index = findInterval(x_num, q, left.open = TRUE)
   interval_index[interval_index == 0L] = 1L
   max_id = length(q) - 1L
   interval_index[interval_index > max_id] = max_id
-  # Build boundary datasets
-  data_lower = data.table::copy(X)
-  data_upper = data.table::copy(X)
-  data_lower[[feature]] = q[interval_index]
-  data_upper[[feature]] = q[interval_index + 1L]
-  # Predictions at boundaries
-  loss_lower = predict_fun(model, data_lower) # maybe predict together and split later
-  loss_upper = predict_fun(model, data_upper)
-  d_l = (loss_upper - loss_lower)
+  original = stacked[[feature]][idx_lower]
+  data.table::set(stacked, i = idx_lower, j = feature, value = q[interval_index])
+  data.table::set(stacked, i = idx_upper, j = feature, value = q[interval_index + 1L])
+  pred_raw = predict_fun(model, stacked)
+  pred = extract_numeric_prediction(pred_raw, expected_n = 2L * n_rows)
+  d_l = pred[idx_upper] - pred[idx_lower]
+  data.table::set(stacked, i = idx_lower, j = feature, value = original)
+  data.table::set(stacked, i = idx_upper, j = feature, value = original)
 
   DT = data.table::data.table(
     row_id         = seq_len(n_rows),
@@ -129,12 +144,10 @@ ale_numeric_feature = function(model, data, X, feature, target_feature_name, n_i
     d_l             = d_l,
     interval_index = interval_index
   )
-
-  # Compute per-interval statistics
   DT[, `:=`(
-    int_n    = .N,
-    int_s1   = sum(d_l),
-    int_s2   = sum(d_l^2)
+    int_n  = .N,
+    int_s1 = sum(d_l),
+    int_s2 = sum(d_l^2)
   ), by = interval_index]
   DT
 }
@@ -156,187 +169,60 @@ ale_numeric_feature = function(model, data, X, feature, target_feature_name, n_i
 #'
 #' @return (`data.table()`) \cr
 #'   ALE data with \code{row_id}, \code{feat_val}, \code{d_l}, \code{interval_index}, etc.
+#' @param stacked (`NULL` or [data.table::data.table()]) \cr
+#'   Shared \code{2n}-row design matrix for batched categorical ALE (see numeric branch).
+#' @param idx_lower, idx_upper (`integer()` or \code{NULL}) \cr
+#'   Row halves in \code{stacked}: plus-vector / minus-vector predictions respectively.
 #' @keywords internal
-ale_categorical_feature = function(model, data, X, feature, target_feature_name, predict_fun = NULL) {
-  data_copy = data
-  x_cat = droplevels(data_copy[[feature]])
+ale_categorical_feature = function(model, data, X, feature, predict_fun = NULL,
+  stacked = NULL, idx_lower = NULL, idx_upper = NULL) {
+  x_cat = droplevels(data[[feature]])
   K = nlevels(x_cat)
-  n_rows = nrow(data_copy)
-  # If only one level, d_l is zero
+  n_rows = nrow(data)
+  if (is.null(stacked)) {
+    xd = data.table::as.data.table(X)
+    stacked = data.table::rbindlist(list(xd, xd), use.names = TRUE)
+    idx_lower = seq_len(n_rows)
+    idx_upper = seq.int(n_rows + 1L, 2L * n_rows)
+  }
+
   if (K <= 1) {
-    return(data.table::data.table(
-      row_id         = seq_len(n_rows),
-      feat_val       = x_cat,
-      x_left         = x_cat,
-      x_right        = x_cat,
-      d_l             = 0,
-      interval_index = as.numeric(x_cat),
-      int_n          = length(x_cat),
-      int_s1         = 0,
-      int_s2         = 0
-    ))
+    return(ale_zero(feat_val = x_cat, interval_index = as.integer(x_cat)))
   }
   levels_orig = levels(x_cat)
   levels_id = as.numeric(x_cat)
-  # Indices for adjacent category replacement
-  row_ind_plus = seq_len(nrow(data_copy))[levels_id < K] # not the highest level
-  row_ind_neg = seq_len(nrow(data_copy))[levels_id > 1] # not the lowest level
+  row_ind_plus = seq_len(n_rows)[levels_id < K]
+  row_ind_neg  = seq_len(n_rows)[levels_id > 1]
 
-  x_plus = data.table::copy(X)
-  x_neg = data.table::copy(X)
-  x_plus[row_ind_plus, feature] = levels_orig[levels_id[row_ind_plus] + 1L]
-  x_neg[row_ind_neg, feature] = levels_orig[levels_id[row_ind_neg] - 1L]
-  y_hat_plus = predict_fun(model, x_plus)
-  y_hat_neg = predict_fun(model, x_neg)
-  delta = y_hat_plus - y_hat_neg
+  original = stacked[[feature]][idx_lower]
+  cp = X[[feature]]
+  cn = X[[feature]]
+  cp[row_ind_plus] = levels_orig[levels_id[row_ind_plus] + 1L]
+  cn[row_ind_neg] = levels_orig[levels_id[row_ind_neg] - 1L]
+  data.table::set(stacked, i = idx_lower, j = feature, value = cp)
+  data.table::set(stacked, i = idx_upper, j = feature, value = cn)
+
+  pred_cat = extract_numeric_prediction(
+    predict_fun(model, stacked),
+    expected_n = 2L * n_rows
+  )
+  delta = pred_cat[idx_lower] - pred_cat[idx_upper]
+  data.table::set(stacked, i = idx_lower, j = feature, value = original)
+  data.table::set(stacked, i = idx_upper, j = feature, value = original)
 
   DT = data.table::data.table(
     row_id         = seq_len(n_rows),
-    feat_val       = data_copy[[feature]],
-    x_left         = x_neg[[feature]],
-    x_right        = x_plus[[feature]],
+    feat_val       = data[[feature]],
+    x_left         = cn,
+    x_right        = cp,
     d_l             = delta,
     interval_index = levels_id
   )
 
-  # Full-interval statistics (each category treated as an interval)
-  # Note: :=, .N, and column names in by clause are data.table special syntax
-  DT[, `:=`( # nolint: object_usage_linter
-    int_n    = .N, # nolint: object_usage_linter
-    int_s1   = sum(d_l),
-    int_s2   = sum(d_l^2)
+  DT[, `:=`(
+    int_n  = .N,
+    int_s1 = sum(d_l, na.rm = TRUE),
+    int_s2 = sum(d_l^2, na.rm = TRUE)
   ), by = interval_index]
   DT
 }
-
-#### Old ale_categorical_feature ####
-# ale_categorical_feature = function(model, data, X, feature, target_feature_name, predict_fun = NULL) {
-#   data_copy = data
-#   x_cat = droplevels(data_copy[[feature]])
-#   K = nlevels(x_cat)
-#   n_rows = nrow(data_copy)
-#   # If only one level, d_l is zero
-#   if (K <= 1) {
-#     return(data.table::data.table(
-#       row_id         = seq_len(n_rows),
-#       feat_val       = x_cat,
-#       x_left         = x_cat,
-#       x_right        = x_cat,
-#       d_l             = 0,
-#       interval_index = as.numeric(x_cat),
-#       int_n          = length(x_cat),
-#       int_s1         = 0,
-#       int_s2         = 0
-#     ))
-#   }
-#   levels_orig = levels(x_cat)
-#   levels_id = as.numeric(x_cat)
-#   # Indices for adjacent category replacement
-#   row_ind_plus = seq_len(nrow(data_copy))[levels_id < K] # not the highest level
-#   row_ind_neg = seq_len(nrow(data_copy))[levels_id > 1] # not the lowest level
-#
-#   x_plus = data.table::copy(X)
-#   x_neg = data.table::copy(X)
-#   x_plus[row_ind_plus, feature] = levels_orig[levels_id[row_ind_plus] + 1L]
-#   x_neg[row_ind_neg, feature] = levels_orig[levels_id[row_ind_neg] - 1L]
-#   y_hat_plus = predict_fun(model, x_plus)
-#   y_hat_neg = predict_fun(model, x_neg)
-#   delta = y_hat_plus - y_hat_neg
-#
-#   DT = data.table::data.table(
-#     row_id         = seq_len(n_rows),
-#     feat_val       = data_copy[[feature]],
-#     x_left         = x_neg[[feature]],
-#     x_right        = x_plus[[feature]],
-#     d_l             = delta,
-#     interval_index = levels_id
-#   )
-#
-#   # Full-interval statistics (each category treated as an interval)
-#   # Note: :=, .N, and column names in by clause are data.table special syntax
-#   DT[, `:=`( # nolint: object_usage_linter
-#     int_n    = .N, # nolint: object_usage_linter
-#     int_s1   = sum(d_l),
-#     int_s2   = sum(d_l^2)
-#   ), by = interval_index]
-#   DT
-# }
-
-
-#### Old calculate_ale ####
-# calculate_ale = function(model, data, feature_set, target_feature_name, h, predict_fun = NULL) {
-#   if (is.null(predict_fun)) {
-#     predict_fun = function(model, data) {
-#       pred = model$predict_newdata(data)
-#       if (inherits(pred, "Prediction")) pred$response else pred
-#     }
-#   }
-#   X = data[, setdiff(colnames(data), target_feature_name), drop = FALSE]
-#   effect = lapply(feature_set, function(feature) {
-#     if (class(data[, feature]) == "factor") {
-#       # For categorical features, calculate ALE using adjacent category differences
-#       data[, feature] = droplevels(data[, feature])
-#       K = nlevels(data[, feature])
-#       levs_orig = levels(data[, feature])
-#       x_ord = as.numeric(data[, feature])
-#
-#       # Indices for boundary interpolation
-#       row_ind_plus = (1:nrow(data))[x_ord < K] # not the highest level
-#       row_ind_neg = (1:nrow(data))[x_ord > 1] # not the lowest level
-#
-#       x_plus = X
-#       x_neg = X
-#       x_plus[row_ind_plus, feature] = levs_orig[x_ord[row_ind_plus] + 1]
-#       x_neg[row_ind_neg, feature] = levs_orig[x_ord[row_ind_neg] - 1]
-#
-#       y_hat_plus = predict_fun(model, x_plus)
-#       y_hat_neg = predict_fun(model, x_neg)
-#
-#       # Calculate finite differences
-#       Delta = y_hat_plus - y_hat_neg
-#
-#       DT = data.table::data.table(
-#         "feat_val" = data[, feature],
-#         "x_left" = x_neg[, feature],
-#         "x_right" = x_plus[, feature],
-#         "d_l" = Delta,
-#         "interval_index" = as.numeric(data[, feature]),
-#         "interval_width" = 1
-#       )
-#     } else {
-#       # For numeric features, use quantile-based intervals
-#       # Create interval boundaries
-#       q = quantile(data[[feature]], 0:h / h)
-#
-#       # Assign data points to intervals
-#       interval_index = findInterval(data[[feature]], q, left.open = TRUE)
-#       # Leftmost interval should be 1, not 0
-#       interval_index[interval_index == 0] = 1
-#
-#       # Create data with interval boundaries (exclude target for prediction)
-#       data_lower = data_upper = X
-#       data_lower[[feature]] = q[interval_index]
-#       data_upper[[feature]] = q[interval_index + 1]
-#
-#       # Get predictions at boundaries
-#       loss_lower = predict_fun(model, data_lower)
-#       loss_upper = predict_fun(model, data_upper)
-#
-#       # Calculate finite differences
-#       d_l = (loss_upper - loss_lower)
-#       interval_width = q[interval_index + 1] - q[interval_index]
-#
-#       DT = data.table::data.table(
-#         "feat_val" = data[, feature],
-#         "x_left" = q[interval_index],
-#         "x_right" = q[interval_index + 1],
-#         "d_l" = d_l,
-#         "interval_index" = interval_index,
-#         "interval_width" = interval_width
-#       )
-#     }
-#     DT
-#   })
-#   names(effect) = feature_set
-#   return(effect)
-# }

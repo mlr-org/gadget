@@ -1,7 +1,7 @@
 # NSE variables used in data.table, ggplot2/ggraph - suppress "no visible binding" notes
 utils::globalVariables(c(
   ".value", ".borders", ".id", ".type", ".feature", ".data", "type",
-  "x_grid", "d_l", "level", "x", "y", "label", "depth",
+  "x_grid", "d_l", "level", "series", "x", "y", "label", "depth",
   "interval_index", "x_left", "x_right", "int_n", "int_s1", "int_s2",
   "row_id", "feat_val"
 ))
@@ -31,15 +31,18 @@ utils::globalVariables(c(
 #'   \item Fit: \code{tree$fit(data, target_feature_name, ...)}\cr
 #'         Strategy-specific \code{...} arguments:\cr
 #'         \strong{AleStrategy}: \code{model} (required), \code{n_intervals = 10}, \code{predict_fun = NULL},
-#'         \code{order_method = "raw"}, \code{with_stab = FALSE}.\cr
-#'         \strong{PdStrategy}: \code{effect} (required).
+#'         \code{order_method = "raw"}, \code{with_stab = FALSE}, \code{ale_engine} (default \code{"cpp"}).\cr
+#'         \strong{PdStrategy}: either \code{effect}, or \code{model} with optional
+#'         \code{predict_fun}, \code{n_grid}, and \code{pd_engine} (default \code{"cpp"}).
 #'         Both accept \code{feature_set} and \code{split_feature}.\cr
 #'         Tree params: \code{impr_par}, \code{min_node_size}, \code{n_quantiles}.
 #'   \item Visualize: \code{tree$plot_tree_structure()}, \code{tree$plot(...)}, \code{tree$extract_split_info()}.
 #' }
 #'
-#' For PD-based trees, pass an effect object from \code{iml::FeatureEffects(..., method = "ice")}
-#' to \code{tree$fit(effect = ..., data = ..., target_feature_name = ...)}.
+#' For PD-based trees, either pass an effect object from
+#' \code{iml::FeatureEffects(..., method = "ice")} to
+#' \code{tree$fit(effect = ..., data = ..., target_feature_name = ...)},
+#' or pass a fitted model and let gadget compute PD/ICE internally.
 #'
 #' @name gadget-package
 #' @aliases gadget gadget-package

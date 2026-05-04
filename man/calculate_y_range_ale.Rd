@@ -11,10 +11,10 @@ calculate_y_range_ale(curves, data, target_feature_name)
 Output of \code{prepare_plot_data_ale}.}
 
 \item{data}{(`data.frame()` or `NULL`) \cr
-Original data (optional).}
+Unused; kept for call compatibility. Limits follow \code{d_l} only, not the response column.}
 
-\item{target_feature_name}{(`character(1)`) \cr
-Target column.}
+\item{target_feature_name}{(`character(1)` or `NULL`) \cr
+Unused; see \code{data}.}
 }
 \value{
 (`list()`) \cr

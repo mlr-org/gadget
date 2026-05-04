@@ -33,7 +33,7 @@ Features for splitting; \code{NULL} = all.}
   \code{Z}: split-feature data.table; \code{Y}: mean-centered effects; \code{grid}: grid list.
 }
 \description{
-Given effect, data, and optional feature/split sets: validates features;
+Given effect, data, and optional feature/split sets: resolves features;
 converts character to factor; builds Z (split columns); calls \code{mean_center_ice} for Y and grid.
 }
 \keyword{internal}

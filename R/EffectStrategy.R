@@ -25,6 +25,13 @@ EffectStrategy = R6::R6Class(
     #'   Strategy identifier (e.g. \code{"ale"}, \code{"pd"}).
     initialize = function(name) {
       self$name = name
+    },
+
+    #' @description
+    #' Optional post-fit cleanup to release retained objects.
+    #' Default is no-op; subclasses override when needed (see \code{AleStrategy$clean()}).
+    clean = function() {
+      invisible(NULL)
     }
   ),
   private = list(

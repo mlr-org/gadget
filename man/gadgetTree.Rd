@@ -36,13 +36,19 @@ t = GadgetTree$new(strategy, n_split = 2, impr_par = 0.1, min_node_size = 10, n_
 
 \examples{
 \dontrun{
-# Example: Fit and plot a PD tree using PdStrategy and GadgetTree
+# PD: `data` and `target_feature_name` come first; pass `effect` and/or `model` via `...`.
 pd_strat = PdStrategy$new()
 tree = GadgetTree$new(strategy = pd_strat, n_split = 2)
-tree$fit(effect, data, target_feature_name = "target")
-tree$plot(effect, data, target_feature_name = "target")
+tree$fit(data = dat, target_feature_name = "y", effect = effect_obj)
+tree$plot(data = dat, target_feature_name = "y", effect = effect_obj)
+tree$plot(data = dat, target_feature_name = "y")  # uses cached effect from fit()
 tree$plot_tree_structure()
 split_info = tree$extract_split_info()
+
+# ALE: pass `model` (and optional `n_intervals`, `ale_engine`, etc.).
+tree_ale = GadgetTree$new(strategy = AleStrategy$new(), n_split = 2)
+tree_ale$fit(data = dat, target_feature_name = "y", model = fitted_model)
+tree_ale$plot(data = dat, target_feature_name = "y")
 }
 
 }
@@ -156,8 +162,11 @@ Features for splitting; \code{NULL} = all.}
 
 \item{\code{...}}{\cr
 Strategy-specific arguments passed to \code{$fit()}.
-For [AleStrategy]: \code{model}, \code{n_intervals}, \code{predict_fun}, \code{order_method}, \code{with_stab}.
-For [PdStrategy]: \code{effect}.}
+For [AleStrategy]: \code{model} or \code{effect}, plus optional
+\code{n_intervals}, \code{predict_fun}, \code{order_method},
+\code{ale_engine}, \code{with_stab}.
+For [PdStrategy]: \code{effect}, or \code{model} with optional
+\code{predict_fun}, \code{n_grid}, and \code{pd_engine}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -173,9 +182,9 @@ For [PdStrategy]: \code{effect}.}
 Plot tree via \code{strategy$plot()}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{GadgetTree$plot(
-  effect = NULL,
   data,
   target_feature_name,
+  effect = NULL,
   depth = NULL,
   node_id = NULL,
   features = NULL,
@@ -186,14 +195,14 @@ Plot tree via \code{strategy$plot()}.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{effect}}{(R6 or `list()` or `NULL`) \cr
-Effect object; \code{NULL} for ALE cached effect.}
-
 \item{\code{data}}{(`data.frame()`) \cr
 Data.}
 
 \item{\code{target_feature_name}}{(`character(1)`) \cr
 Target name.}
+
+\item{\code{effect}}{(R6 or `list()` or `NULL`) \cr
+Optional effect object; omit or \code{NULL} uses strategy-cached effect from \code{$fit()}.}
 
 \item{\code{depth}}{(`integer()` or `NULL`) \cr
 Depths to plot.}
@@ -219,9 +228,24 @@ Features to plot.}
 \subsection{Method \code{plot_tree_structure()}}{
 Converts root to depth-list and calls \code{plot_tree_structure()}. Prints graph.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{GadgetTree$plot_tree_structure()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{GadgetTree$plot_tree_structure(
+  label_wrap_width = 34L,
+  node_spread_x = 1.55,
+  node_spread_y = 1.12
+)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{label_wrap_width}}{(`integer(1)` or `NULL`) \cr
+Wrap node labels to this many characters per line; \code{NULL} disables wrapping.}
+
+\item{\code{node_spread_x, node_spread_y}}{(`numeric(1)`) \cr
+Layout stretch factors for the ggraph \code{"tree"} layout (larger values separate nodes).}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-GadgetTree-extract_split_info"></a>}}

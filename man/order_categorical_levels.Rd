@@ -9,7 +9,7 @@ order_categorical_levels(
   data,
   feature,
   target_feature_name,
-  order_method = "mds"
+  order_method = "raw"
 )
 }
 \arguments{

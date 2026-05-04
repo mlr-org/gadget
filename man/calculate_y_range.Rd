@@ -4,7 +4,12 @@
 \alias{calculate_y_range}
 \title{Compute y-axis range for PD plots.}
 \usage{
-calculate_y_range(prepared_data, data, target_feature_name)
+calculate_y_range(
+  prepared_data,
+  data,
+  target_feature_name,
+  mean_center = FALSE
+)
 }
 \arguments{
 \item{prepared_data}{(`list()`) \cr
@@ -15,6 +20,10 @@ Original data.}
 
 \item{target_feature_name}{(`character(1)`) \cr
 Target column.}
+
+\item{mean_center}{(`logical(1)`) \cr
+If \code{TRUE}, ICE/PDP are on a centered scale; the raw target column is not merged into
+\code{ylim}. If \code{FALSE}, limits follow ICE/PD values and the target range (for overlays).}
 }
 \value{
 (`list()`) \cr

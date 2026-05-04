@@ -7,10 +7,12 @@
 [R6::R6Class] object inheriting from [EffectStrategy].
 }
 \description{
-PD-based effect strategy (inherits from \link{EffectStrategy}). Given effect and data,
+PD-based effect strategy (inherits from \link{EffectStrategy}). Given effect or model and data,
 preprocesses to Z/Y/grid;
 mean-centers effects per node; computes sum-of-variances heterogeneity;
 finds best split via C++; fits tree and plots PD/ICE.
+Character feature columns are coerced to \code{factor} before ICE/PD computation so they match
+split-matrix treatment and learner conventions (same as \code{prepare_split_data_common}).
 }
 \details{
 This class is used internally by the GadgetTree framework to implement partial dependence
@@ -30,13 +32,21 @@ s = PdStrategy$new()
 # (Assuming effect and data are prepared)
 pd_strat = PdStrategy$new()
 tree = GadgetTree$new(strategy = pd_strat, n_split = 2)
-tree$fit(effect, data, target_feature_name = "target")
-tree$plot(effect, data, target_feature_name = "target")
+tree$fit(data = data, target_feature_name = "target", effect = effect)
+tree$plot(data = data, target_feature_name = "target", effect = effect)
 }
 
 }
 \section{Super class}{
 \code{\link[gadget:EffectStrategy]{gadget::EffectStrategy}} -> \code{PdStrategy}
+}
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{effect}}{(`list()` or `R6` or `NULL`) \cr
+Cached PD/ICE effect used when \code{$plot()} omits \code{effect}.}
+}
+\if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -49,10 +59,16 @@ tree$plot(effect, data, target_feature_name = "target")
 \item \href{#method-PdStrategy-find_best_split}{\code{PdStrategy$find_best_split()}}
 \item \href{#method-PdStrategy-plot}{\code{PdStrategy$plot()}}
 \item \href{#method-PdStrategy-fit}{\code{PdStrategy$fit()}}
-\item \href{#method-PdStrategy-clean}{\code{PdStrategy$clean()}}
 \item \href{#method-PdStrategy-clone}{\code{PdStrategy$clone()}}
 }
 }
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
+<ul>
+<li><span class="pkg-link" data-pkg="gadget" data-topic="EffectStrategy" data-id="clean"><a href='../../gadget/html/EffectStrategy.html#method-EffectStrategy-clean'><code>gadget::EffectStrategy$clean()</code></a></span></li>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-PdStrategy-new"></a>}}
 \if{latex}{\out{\hypertarget{method-PdStrategy-new}{}}}
@@ -226,7 +242,7 @@ Plot PD/ICE tree via \code{plot_tree_pd}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PdStrategy$plot(
   tree,
-  effect,
+  effect = NULL,
   data,
   target_feature_name,
   depth = NULL,
@@ -242,7 +258,7 @@ Plot PD/ICE tree via \code{plot_tree_pd}.
 \item{\code{tree}}{(`list()`) \cr
 Depth-based list of Node objects.}
 
-\item{\code{effect}}{(R6 or `list()`) \cr
+\item{\code{effect}}{(R6 or `list()` or `NULL`) \cr
 Effect object.}
 
 \item{\code{data}}{(`data.frame()`) \cr
@@ -277,11 +293,15 @@ Fit tree: preprocess, create root, split recursively.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PdStrategy$fit(
   tree,
-  effect,
+  effect = NULL,
+  model = NULL,
   data,
   target_feature_name,
   feature_set = NULL,
   split_feature = NULL,
+  predict_fun = NULL,
+  n_grid = 20L,
+  pd_engine = c("cpp", "r"),
   ...
 )}\if{html}{\out{</div>}}
 }
@@ -292,8 +312,11 @@ Fit tree: preprocess, create root, split recursively.
 \item{\code{tree}}{(`GadgetTree`) \cr
 Tree instance.}
 
-\item{\code{effect}}{(R6 or `list()`) \cr
-Effect object.}
+\item{\code{effect}}{(R6 or `list()` or `NULL`) \cr
+Optional precomputed effect object.}
+
+\item{\code{model}}{(`any`) \cr
+Fitted model for internal PD/ICE computation.}
 
 \item{\code{data}}{(`data.frame()`) \cr
 Data.}
@@ -304,6 +327,16 @@ Target name.}
 \item{\code{feature_set, split_feature}}{(`character()` or `NULL`) \cr
 Feature subsets.}
 
+\item{\code{predict_fun}}{(`function()` or `NULL`) \cr
+Optional prediction function.}
+
+\item{\code{n_grid}}{(`integer(1)`) \cr
+Number of grid points for numeric features.}
+
+\item{\code{pd_engine}}{(`character(1)`) \cr
+When computing ICE/PD from \code{model}: \code{"cpp"} (column-wise stacked \code{newdata},
+xplaineff-style) or \code{"r"} (\code{data.table::rbindlist}).}
+
 \item{\code{...}}{Ignored.}
 }
 \if{html}{\out{</div>}}
@@ -312,16 +345,6 @@ Feature subsets.}
 (`GadgetTree`) \cr
   The tree, invisibly.
 }
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-PdStrategy-clean"></a>}}
-\if{latex}{\out{\hypertarget{method-PdStrategy-clean}{}}}
-\subsection{Method \code{clean()}}{
-Optional cleanup hook (no-op for PD). Called after \code{$fit()} by GadgetTree.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PdStrategy$clean()}\if{html}{\out{</div>}}
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-PdStrategy-clone"></a>}}

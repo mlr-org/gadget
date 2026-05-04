@@ -24,7 +24,7 @@
 #' @field stop_criterion_met (`logical(1)`) \cr
 #'   Whether the minimal node size or improvement threshold has been reached.
 #' @field improvement_met (`logical(1)`) \cr
-#'   Whether the improvement threshold was not met.
+#'   Whether the improvement-based stop criterion was met (`TRUE` = stop splitting).
 #' @field strategy (PdStrategy | AleStrategy) \cr
 #'   Strategy for effect-specific operations.
 #'
@@ -76,7 +76,7 @@ Node = R6::R6Class("Node", public = list(
   #' @param objective_value (`numeric(1)` or `NULL`) \cr
   #'   Total objective value.
   #' @param improvement_met (`logical(1)`) \cr
-  #'   Whether improvement threshold was not met.
+  #'   Whether improvement threshold was met.
   #' @param int_imp (`numeric(1)` or `NULL`) \cr
   #'   Interaction importance.
   #' @param int_imp_j (`numeric()` or `NULL`) \cr
@@ -154,7 +154,7 @@ Node = R6::R6Class("Node", public = list(
       )
       self$find_best_split(Z, y_curr, min_node_size, n_quantiles)
     }, error = function(e) {
-      cli::cli_inform("find_best_split error: {e$message}")
+      cli::cli_warn("find_best_split error at node {self$id} (depth {self$depth}): {e$message}")
       NULL
     })
     if (is.null(split_info)) {
@@ -165,7 +165,7 @@ Node = R6::R6Class("Node", public = list(
     children_info = tryCatch({
       self$create_children(Z, Y, split_info, objective_value_root_j, objective_value_root, impr_par)
     }, error = function(e) {
-      cli::cli_inform("create_children error: {e$message}")
+      cli::cli_warn("create_children error at node {self$id} (depth {self$depth}): {e$message}")
       NULL
     })
     if (is.null(children_info)) {
@@ -223,21 +223,18 @@ Node = R6::R6Class("Node", public = list(
   #'   Best split info or \code{NULL} if no valid split.
   find_best_split = function(Z, y_curr, min_node_size, n_quantiles) {
     z_subset = Z[self$subset_idx, ]
-    if (!is.data.frame(z_subset)) {
-      z_subset = data.frame(z_subset)
-      colnames(z_subset) = colnames(Z)
-    }
     split_res = self$strategy$find_best_split(Z = z_subset, Y = y_curr,
       min_node_size = min_node_size, n_quantiles = n_quantiles)
     if (is.null(split_res$best_split) || length(split_res$best_split) == 0 || all(!split_res$best_split)) {
-      return(NULL)
+      NULL
+    } else {
+      list(
+        split_feature = split_res$split_feature[split_res$best_split][1],
+        split_value = split_res$split_point[split_res$best_split][1],
+        is_categorical = split_res$is_categorical[split_res$best_split][1],
+        raw_result = split_res
+      )
     }
-    list(
-      split_feature = split_res$split_feature[split_res$best_split][1],
-      split_value = split_res$split_point[split_res$best_split][1],
-      is_categorical = split_res$is_categorical[split_res$best_split][1],
-      raw_result = split_res
-    )
   },
 
   #' @description
@@ -273,8 +270,9 @@ Node = R6::R6Class("Node", public = list(
       idx_left = self$subset_idx[which(z_sub <= as.numeric(split_value))]
       idx_right = self$subset_idx[which(z_sub > as.numeric(split_value))]
     }
-    if (length(idx_left) == 0) idx_left = 0
-    if (length(idx_right) == 0) idx_right = 0
+    if (length(idx_left) == 0 || length(idx_right) == 0) {
+      return(NULL)
+    }
 
     grid_info = self$create_child_grids(split_feature, split_value, is_categorical)
     obj = self$strategy$get_child_objectives(
@@ -286,10 +284,11 @@ Node = R6::R6Class("Node", public = list(
     left_objective_value = obj$left_objective_value
     right_objective_value = obj$right_objective_value
     int_imp_j = (self$objective$value_j - left_objective_value_j - right_objective_value_j) / objective_value_root_j
+    int_imp_j[!is.finite(int_imp_j)] = NA_real_
     int_imp = (self$objective$value - left_objective_value - right_objective_value) / objective_value_root
 
     # Threshold for root node: impr_par; for child node: parent int_imp * impr_par
-    threshold = if (self$id == 1) impr_par else self$parent$int_imp * impr_par
+    threshold = if (is.null(self$parent)) impr_par else self$parent$int_imp * impr_par
     # Check if improvement meets threshold
     if (int_imp < threshold) {
       self$improvement_met = TRUE

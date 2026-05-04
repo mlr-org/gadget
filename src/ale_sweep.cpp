@@ -19,6 +19,11 @@
 // [[Rcpp::depends(Rcpp)]]
 using namespace Rcpp;
 
+/* Minimum observations per child side required to run the boundary stabilizer.
+ * With n = 20 the window is ~2 rows (10%), leaving ~18 "far" observations for
+ * variance estimation -- the practical lower bound for a meaningful stabilizer. */
+static const int kMinSideForStab = 20;
+
 // -----------------------------------------------------------------------------
 // risk_from_stats
 // Purpose:
@@ -61,7 +66,7 @@ double adjust_side_cpp(
   int idx_start = is_left ? 0 : t;
   int idx_end   = is_left ? t - 1 : n_obs - 1;
   int n_side = idx_end - idx_start + 1;
-  if (n_side <= 20) return original_risk;
+  if (n_side <= kMinSideForStab) return original_risk;
 
   /* Window size: 10% of side or min 10. */
   int w = std::max(static_cast<int>(0.1 * n_side + 0.5), 10);
@@ -207,7 +212,7 @@ List ale_sweep_cpp(
   NumericVector d_l_j_sorted(n_obs);
   IntegerVector interval_idx_sorted(n_obs);
   const int N = d_l_mat.ncol();
-  if (use_stabilizer && has_self_ale && z_sorted.size() >= (size_t)n_obs) {
+  if (use_stabilizer && has_self_ale && z_sorted.size() >= (R_xlen_t)n_obs) {
     for (int i = 0; i < n_obs; ++i) {
       int row = ord_idx[i] - 1;
       if (row < 0 || row >= N) stop("ord_idx contains invalid row index");
@@ -266,8 +271,8 @@ List ale_sweep_cpp(
 
     /* Left/right constant? (all same z value) -> drop self risk. */
     bool l_const = (z_sorted.size() > 0 && std::abs(z_sorted[0] - z_sorted[t - 1]) < 1e-15);
-    bool r_const = (z_sorted.size() >= (size_t)n_obs && std::abs(z_sorted[t] - z_sorted[n_obs - 1]) < 1e-15);
-    bool do_stab = use_stabilizer && has_self_ale && !l_const && !r_const && t > 20 && (n_obs - t) > 20;
+    bool r_const = (z_sorted.size() >= (R_xlen_t)n_obs && std::abs(z_sorted[t] - z_sorted[n_obs - 1]) < 1e-15);
+    bool do_stab = use_stabilizer && has_self_ale && !l_const && !r_const && t > kMinSideForStab && (n_obs - t) > kMinSideForStab;
 
     /* Compute total objective: sum of risks, minus self-ALE risk, plus stabilizer adj. */
     double total = R_PosInf;

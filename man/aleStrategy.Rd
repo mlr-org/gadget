@@ -58,11 +58,14 @@ Intervals for numeric ALE.}
 \item{\code{order_method}}{(`character(1)`) \cr
 Categorical order: \code{"mds"}, \code{"pca"}, \code{"random"}, \code{"raw"}.}
 
+\item{\code{ale_engine}}{(`character(1)`) \cr
+ALE backend after \code{$fit()}: \code{"cpp"} or \code{"r"}.}
+
 \item{\code{with_stab}}{(`logical(1)`) \cr
 Whether boundary-stabilized splits are enabled.}
 
-\item{\code{effect_root}}{(`list()`) \cr
-Cached ALE effect at root (for \code{$plot()}).}
+\item{\code{effect}}{(`list()` or `NULL`) \cr
+Cached ALE effect used when \code{$plot()} omits \code{effect}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -99,13 +102,15 @@ Preprocess to Z and Y via \code{prepare_split_data_ale}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{AleStrategy$preprocess(
   model,
+  effect = NULL,
   data,
   target_feature_name,
   n_intervals,
   feature_set = NULL,
   split_feature = NULL,
   predict_fun = NULL,
-  order_method = "mds"
+  order_method = "raw",
+  ale_engine = c("cpp", "r")
 )}\if{html}{\out{</div>}}
 }
 
@@ -114,6 +119,9 @@ Preprocess to Z and Y via \code{prepare_split_data_ale}.
 \describe{
 \item{\code{model}}{(`any`) \cr
 Fitted model.}
+
+\item{\code{effect}}{(`list()` or `NULL`) \cr
+Reserved for future extension. Currently unsupported.}
 
 \item{\code{data}}{(`data.frame()` or `data.table()`) \cr
 Data.}
@@ -135,6 +143,10 @@ Prediction function.}
 
 \item{\code{order_method}}{(`character(1)`) \cr
 Categorical order: \code{"mds"}, \code{"pca"}, \code{"random"}, or \code{"raw"}.}
+
+\item{\code{ale_engine}}{(`character(1)`) \cr
+ALE engine: \code{"cpp"} or \code{"r"}; default \code{c("cpp", "r")} resolves to
+\code{"cpp"} via \code{match.arg}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -274,7 +286,7 @@ Plot ALE curves via \code{plot_tree_ale}.
   node_id = NULL,
   features = NULL,
   show_plot = TRUE,
-  show_point = FALSE,
+  show_point = TRUE,
   mean_center = TRUE,
   ...
 )}\if{html}{\out{</div>}}
@@ -287,7 +299,7 @@ Plot ALE curves via \code{plot_tree_ale}.
 Depth-based list of Node objects.}
 
 \item{\code{effect}}{(`list()` or `NULL`) \cr
-ALE effect; \code{NULL} = use cached \code{effect_root}.}
+ALE effect; \code{NULL} = use cached \code{effect}.}
 
 \item{\code{data}}{(`data.frame()` or `data.table()`) \cr
 Data.}
@@ -325,6 +337,7 @@ Fit tree: preprocess, create root, split recursively.
 \if{html}{\out{<div class="r">}}\preformatted{AleStrategy$fit(
   tree,
   model,
+  effect = NULL,
   data,
   target_feature_name,
   n_intervals = 10,
@@ -333,6 +346,7 @@ Fit tree: preprocess, create root, split recursively.
   predict_fun = NULL,
   order_method = "raw",
   with_stab = FALSE,
+  ale_engine = c("cpp", "r"),
   ...
 )}\if{html}{\out{</div>}}
 }
@@ -345,6 +359,9 @@ Tree instance.}
 
 \item{\code{model}}{(`any`) \cr
 Fitted model.}
+
+\item{\code{effect}}{(`list()` or `NULL`) \cr
+Reserved for future extension. Currently unsupported.}
 
 \item{\code{data}}{(`data.frame()` or `data.table()`) \cr
 Data.}
@@ -367,6 +384,10 @@ Categorical order.}
 \item{\code{with_stab}}{(`logical(1)`) \cr
 Enable boundary stabilizer.}
 
+\item{\code{ale_engine}}{(`character(1)`) \cr
+ALE engine: \code{"cpp"} or \code{"r"}; default \code{c("cpp", "r")} resolves to
+\code{"cpp"} via \code{match.arg}.}
+
 \item{\code{...}}{Ignored.}
 }
 \if{html}{\out{</div>}}
@@ -380,7 +401,8 @@ Enable boundary stabilizer.}
 \if{html}{\out{<a id="method-AleStrategy-clean"></a>}}
 \if{latex}{\out{\hypertarget{method-AleStrategy-clean}{}}}
 \subsection{Method \code{clean()}}{
-Sets \code{data} and \code{model} to NULL to free memory. Returns NULL.
+Sets \code{data} and \code{model} to \code{NULL} to free memory after fitting.
+\code{effect} is intentionally retained because \code{plot()} requires it post-fit.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{AleStrategy$clean()}\if{html}{\out{</div>}}
 }

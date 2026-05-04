@@ -92,16 +92,38 @@ calculate_y_range_impl = function(effect_values, data = NULL, target_feature_nam
 #' @param curves (`list()`) \cr
 #'   Output of \code{prepare_plot_data_ale}.
 #' @param data (`data.frame()` or `NULL`) \cr
-#'   Original data (optional).
-#' @param target_feature_name (`character(1)`) \cr
-#'   Target column.
+#'   Unused; kept for call compatibility. Limits follow \code{d_l} only, not the response column.
+#' @param target_feature_name (`character(1)` or `NULL`) \cr
+#'   Unused; see \code{data}.
 #'
 #' @return (`list()`) \cr
 #'   \code{ymin}, \code{ymax}.
 #' @keywords internal
 calculate_y_range_ale = function(curves, data, target_feature_name) {
   effect_values = unlist(mlr3misc::map(curves, function(x) x$mean_effect$d_l), use.names = FALSE)
-  calculate_y_range_impl(effect_values, data, target_feature_name)
+  calculate_y_range_impl(effect_values, NULL, NULL)
+}
+
+# Y limits for regional ALE panels: global + node curves (node-only can lie outside global after subsetting).
+calculate_y_range_ale_combined = function(global_curves, regional_curves, data, target_feature_name) {
+  gv = unlist(mlr3misc::map(global_curves, function(x) x$mean_effect$d_l), use.names = FALSE)
+  rv = unlist(mlr3misc::map(regional_curves, function(x) x$mean_effect$d_l), use.names = FALSE)
+  calculate_y_range_impl(c(gv, rv), NULL, NULL)
+}
+
+# After effect-only ylim (e.g. mean-centered ICE/PDP or ALE \code{d_l}), expand to include finite overlaid
+# response values when \code{show_point = TRUE} (\code{coord_cartesian} clips otherwise).
+merge_ale_y_range_with_response = function(y_range, y_obs) {
+  checkmate::assert_list(y_range, names = "named", .var.name = "y_range")
+  checkmate::assert_numeric(y_obs, .var.name = "y_obs")
+  y_obs = y_obs[is.finite(y_obs)]
+  if (!length(y_obs)) {
+    return(y_range)
+  }
+  ymin = min(y_range$ymin, min(y_obs))
+  ymax = max(y_range$ymax, max(y_obs))
+  rng = ymax - ymin
+  list(ymin = ymin, ymax = ymax + 0.2 * rng)
 }
 
 #' Preprocess PD node data by depth.
@@ -180,7 +202,11 @@ create_plots_for_depth = function(tree, prepared_data, data, target_feature_name
       path_conditions = track_split_condition(node, tree)
       split_condition = if (length(path_conditions) > 0) paste(path_conditions, collapse = " & ") else NULL
       title = build_node_title(node, depth_idx, tree, style = "pd")
-      y_range = calculate_y_range(prepared_data, data, target_feature_name)
+      y_range = calculate_y_range(prepared_data, data, target_feature_name, mean_center = mean_center)
+      if (isTRUE(mean_center) && isTRUE(show_point) && length(node$subset_idx)) {
+        y_node = data[[target_feature_name]][node$subset_idx]
+        y_range = merge_ale_y_range_with_response(y_range, y_node)
+      }
 
       plots = plot_regional_pd(prepared_data = prepared_data,
         origin_data = data,
@@ -212,11 +238,15 @@ create_plots_for_depth = function(tree, prepared_data, data, target_feature_name
 #'   Original data.
 #' @param target_feature_name (`character(1)`) \cr
 #'   Target column.
+#' @param mean_center (`logical(1)`) \cr
+#'   If \code{TRUE}, ICE/PDP are on a centered scale; the raw target column is not merged into
+#'   \code{ylim}. If \code{FALSE}, limits follow ICE/PD values and the target range (for overlays).
 #'
 #' @return (`list()`) \cr
 #'   \code{ymin}, \code{ymax}.
 #' @keywords internal
-calculate_y_range = function(prepared_data, data, target_feature_name) {
+calculate_y_range = function(prepared_data, data, target_feature_name, mean_center = FALSE) {
+  checkmate::assert_flag(mean_center, .var.name = "mean_center")
   values_list = mlr3misc::map(prepared_data, function(df) {
     if (is.data.frame(df) && ncol(df) >= 1) {
       cols = setdiff(colnames(df), "node")
@@ -227,5 +257,9 @@ calculate_y_range = function(prepared_data, data, target_feature_name) {
     }
   })
   effect_values = unlist(values_list, use.names = FALSE)
-  calculate_y_range_impl(effect_values, data, target_feature_name)
+  if (isTRUE(mean_center)) {
+    calculate_y_range_impl(effect_values, NULL, NULL)
+  } else {
+    calculate_y_range_impl(effect_values, data, target_feature_name)
+  }
 }

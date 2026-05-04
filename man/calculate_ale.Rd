@@ -60,5 +60,10 @@ set to the next vs. previous level; single-level factors get \code{d_l = 0}.
 
 Sample-level columns (\code{row_id}, \code{feat_val}, \code{d_l}, etc.)
 support subsetting by node and downstream heterogeneity calculation.
+
+Downstream plotting (\code{\link{prepare_plot_data_ale}}) aggregates these rows by
+\code{(interval_index, x_left, x_right)}, cumulates \code{d_l}, and optionally mean-centers the
+cumulative curve; plot grids for categories derive from aggregated \code{x_left} values, not by
+re-evaluating \code{calculate_ale}.
 }
 \keyword{internal}

@@ -14,7 +14,7 @@ plot_tree_ale(
   features = NULL,
   color_ale = "lightgreen",
   show_plot = TRUE,
-  show_point = FALSE,
+  show_point = TRUE,
   mean_center = TRUE,
   ...
 )
@@ -56,6 +56,9 @@ Plot options.}
 \description{
 External helper mirroring \code{plot_tree_pd}, used by \code{AleStrategy$plot}.
 Produces patchwork objects per node with ALE mean curves and optional observation points.
-Y-axis limits are auto-computed from effect and target data (like PD strategy).
+Y-axis limits use global and node-specific cumulative ALE (\code{d_l}). When
+\code{show_point = TRUE}, the node subset response is merged into \code{ylim} so overlaid
+points are not clipped by \code{coord_cartesian}. \code{x} limits follow the global grid.
+Y-axis labels use \code{target_feature_name}, matching PD tree plots.
 }
 \keyword{internal}

@@ -24,7 +24,7 @@ test_that("PdStrategy find_best_split returns expected structure", {
   expect_true(is.data.frame(res))
   expect_true(nrow(res) >= 1)
   expect_true(all(c("split_feature", "is_categorical", "split_point",
-        "split_objective", "split_runtime", "best_split") %in% names(res)))
+        "split_objective", "best_split") %in% names(res)))
 })
 
 test_that("PdStrategy heterogeneity returns numeric vector", {

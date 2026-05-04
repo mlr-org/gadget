@@ -12,7 +12,8 @@ prepare_split_data_ale(
   feature_set = NULL,
   split_feature = NULL,
   predict_fun = NULL,
-  order_method = "mds"
+  order_method = "raw",
+  ale_engine = c("cpp", "r")
 )
 }
 \arguments{
@@ -39,6 +40,10 @@ Features for splitting; \code{NULL} = all.}
 
 \item{order_method}{(`character(1)`) \cr
 Categorical level order: \code{"mds"}, \code{"pca"}, \code{"random"}, or \code{"raw"}.}
+
+\item{ale_engine}{(`character(1)`) \cr
+ALE engine: \code{"cpp"} or \code{"r"}; default \code{c("cpp", "r")} resolves to
+\code{"cpp"} via \code{match.arg}.}
 }
 \value{
 (`list()`) \cr
@@ -53,7 +58,8 @@ calls \code{calculate_ale} for Y. Returns list \code{Z}, \code{Y}.
 \details{
 Steps performed:
 \enumerate{
-  \item Resolve and validate \code{feature_set} and \code{split_feature} against \code{colnames(data)}.
+  \item Resolve \code{feature_set} and \code{split_feature} against feature columns (see
+    \code{GadgetTree}/\code{AleStrategy} for target-column validation).
   \item For \code{union(feature_set, split_feature)}, convert character
     columns to factor and order levels via
     \code{order_categorical_levels} (using \code{droplevels} internally).

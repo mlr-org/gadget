@@ -42,27 +42,37 @@ plot_regional_pd = function(prepared_data, origin_data, target_feature_name, nod
       return(ggplot() + theme_bw() + labs(title = "No data"))
     }
 
-    # wide to long conversion
-    grid_values = as.numeric(colnames(data_subset))
+    # wide to long conversion: numeric grids use numeric x; categorical (factor levels as colnames) keep labels
+    cn = colnames(data_subset)
+    grid_as_num = suppressWarnings(as.numeric(cn))
+    grid_numeric = length(cn) > 0L && all(!is.na(grid_as_num))
+    grid_values = if (grid_numeric) grid_as_num else cn
     value_matrix = as.matrix(data_subset)
 
-    # create long format data
     ice_long = data.frame(
       grid = rep(grid_values, each = n_rows),
       value = as.vector(value_matrix),
       id = rep(seq_len(n_rows), times = n_cols),
-      type = "ICE"
+      type = "ICE",
+      stringsAsFactors = FALSE
     )
 
-    # calculate mean ICE for PDP
     valid_values = !is.na(ice_long$value)
-    if (sum(valid_values) > 0) {
-      mean_ice = tapply(ice_long$value[valid_values], ice_long$grid[valid_values], mean, na.rm = TRUE)
+    gv = ice_long$grid[valid_values]
+    ok_g = !is.na(gv)
+    if (sum(valid_values) > 0 && sum(ok_g) > 0) {
+      mean_ice = tapply(ice_long$value[valid_values][ok_g], gv[ok_g], mean, na.rm = TRUE)
+      gnam = names(mean_ice)
+      if (is.null(gnam)) {
+        gnam = rep(NA_character_, length(mean_ice))
+      }
+      pdp_grid = if (grid_numeric) as.numeric(gnam) else gnam
       pdp_centered = data.frame(
-        grid = as.numeric(names(mean_ice)),
+        grid = pdp_grid,
         value = as.numeric(mean_ice),
         id = NA,
-        type = "PDP"
+        type = "PDP",
+        stringsAsFactors = FALSE
       )
       plot_data = rbind(
         ice_long[, c("grid", "value", "id", "type")],
@@ -70,6 +80,10 @@ plot_regional_pd = function(prepared_data, origin_data, target_feature_name, nod
       )
     } else {
       plot_data = ice_long[, c("grid", "value", "id", "type")]
+    }
+
+    if (!grid_numeric) {
+      plot_data$grid = factor(plot_data$grid, levels = unique(cn))
     }
 
     # check if we can draw lines
@@ -91,11 +105,16 @@ plot_regional_pd = function(prepared_data, origin_data, target_feature_name, nod
         alpha = if (show_point) 0.3 else 0, size = 0.8, inherit.aes = FALSE)
     }
     # nolint end
+    ylim_top = ymax
+    if (show_point && is.finite(ymin) && is.finite(ymax)) {
+      rng = ymax - ymin
+      ylim_top = ymax + max(rng, 1e-6) * 0.12
+    }
     p = p +
       scale_color_manual(values = c("ICE" = color_ice, "PDP" = color_pd),
         labels = c("ICE" = if (mean_center) "Mean centered ICE" else "ICE",
           "PDP" = if (mean_center) "Mean centered PDP" else "PDP")) +
-      coord_cartesian(ylim = c(ymin, ymax)) +
+      coord_cartesian(ylim = c(ymin, ylim_top)) +
       # ylim(ymin, ymax) +
       theme_bw(base_size = 9) +
       labs(
@@ -105,18 +124,31 @@ plot_regional_pd = function(prepared_data, origin_data, target_feature_name, nod
         color = NULL
       ) +
       theme(
-        legend.position = "inside",
-        legend.position.inside = c(0.95, 0.95),
-        legend.justification = c("right", "top"),
-        legend.background = element_rect(fill = NA, color = NA),
-        legend.box.background = element_rect(fill = NA, color = "grey", linewidth = 0.1),
         legend.title = element_blank(),
         legend.text = element_text(size = 8),
         legend.key.size = unit(0.6, "lines"),
         plot.title = element_text(hjust = 0.5, size = 9),
         axis.title = element_text(size = 9),
         axis.text = element_text(size = 9)
-      )
+      ) +
+      if (show_point) {
+        theme(
+          legend.position = "inside",
+          legend.position.inside = c(0.98, 0.98),
+          legend.justification = c("right", "top"),
+          legend.background = element_rect(fill = "white", color = NA),
+          legend.box.background = element_rect(fill = "white", color = "grey65", linewidth = 0.2),
+          legend.margin = margin(3, 3, 3, 3)
+        )
+      } else {
+        theme(
+          legend.position = "inside",
+          legend.position.inside = c(0.95, 0.95),
+          legend.justification = c("right", "top"),
+          legend.background = element_rect(fill = NA, color = NA),
+          legend.box.background = element_rect(fill = NA, color = "grey", linewidth = 0.1)
+        )
+      }
     p
   })
   plot

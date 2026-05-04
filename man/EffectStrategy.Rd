@@ -32,6 +32,7 @@ Fit timing (seconds) for global/regional fits.}
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-EffectStrategy-new}{\code{EffectStrategy$new()}}
+\item \href{#method-EffectStrategy-clean}{\code{EffectStrategy$clean()}}
 \item \href{#method-EffectStrategy-clone}{\code{EffectStrategy$clone()}}
 }
 }
@@ -52,6 +53,17 @@ Strategy identifier (e.g. \code{"ale"}, \code{"pd"}).}
 }
 \if{html}{\out{</div>}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-EffectStrategy-clean"></a>}}
+\if{latex}{\out{\hypertarget{method-EffectStrategy-clean}{}}}
+\subsection{Method \code{clean()}}{
+Optional post-fit cleanup to release retained objects.
+Default is no-op; subclasses override when needed (see \code{AleStrategy$clean()}).
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{EffectStrategy$clean()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-EffectStrategy-clone"></a>}}

@@ -7,19 +7,34 @@
 #'
 #' @param tree (`list()`) \cr
 #'   Depth-based list of Node objects.
+#' @param label_wrap_width (`integer(1)` or `NULL`) \cr
+#'   If not \code{NULL}, wrap each line of node labels to this many characters (see \code{strwrap}).
+#' @param node_spread_x,node_spread_y (`numeric(1)`) \cr
+#'   Positive multipliers applied to the default \code{"tree"} layout coordinates to separate nodes.
 #'
 #' @return (ggplot) \cr
 #'   Tree structure visualization.
 #'
 #' @importFrom igraph graph_from_data_frame
-#' @importFrom ggraph ggraph geom_edge_elbow geom_node_label circle
+#' @importFrom ggraph create_layout ggraph geom_edge_elbow geom_node_label circle
 #' @importFrom ggplot2 aes coord_flip scale_fill_manual theme_void scale_y_reverse theme expansion arrow unit margin
 #' @importFrom stats setNames na.omit
 #' @importFrom grDevices hcl.colors
 #'
 #' @keywords internal
-plot_tree_structure = function(tree) {
+plot_tree_structure = function(tree, label_wrap_width = 34L, node_spread_x = 1.55, node_spread_y = 1.12) {
+  checkmate::assert_integerish(label_wrap_width, len = 1L, lower = 8L, null.ok = TRUE, .var.name = "label_wrap_width")
+  checkmate::assert_numeric(node_spread_x, len = 1L, lower = 0.5, finite = TRUE, .var.name = "node_spread_x")
+  checkmate::assert_numeric(node_spread_y, len = 1L, lower = 0.5, finite = TRUE, .var.name = "node_spread_y")
   data = prepare_layout_data(tree)
+  if (!is.null(label_wrap_width)) {
+    data$label = vapply(
+      data$label,
+      wrap_tree_label,
+      FUN.VALUE = character(1L),
+      width = as.integer(label_wrap_width)
+    )
+  }
   parent_map = setNames(data$id, data$node_id)
   data$parent_id = parent_map[as.character(data$id_parent)]
   edge_list = na.omit(data[, c("parent_id", "id")])
@@ -27,7 +42,11 @@ plot_tree_structure = function(tree) {
 
   g = igraph::graph_from_data_frame(edge_list, vertices = data, directed = TRUE)
 
-  gg = ggraph::ggraph(g, layout = "tree") +
+  lay = ggraph::create_layout(g, layout = "tree")
+  lay$x = lay$x * node_spread_x
+  lay$y = lay$y * node_spread_y
+
+  gg = ggraph::ggraph(lay) +
     coord_flip(clip = "off")
 
   # Only add edges if there are any
@@ -50,9 +69,10 @@ plot_tree_structure = function(tree) {
     ) +
     scale_fill_manual(values = hcl.colors(n = length(tree), palette = "Set2")) +
     theme_void() +
-    scale_y_reverse(expand = expansion(mult = c(0.01, 0.01))) +
+    ggplot2::scale_x_continuous(expand = expansion(mult = c(0.1, 0.1))) +
+    scale_y_reverse(expand = expansion(mult = c(0.08, 0.08))) +
     theme(
       legend.position = "none",
-      plot.margin = margin(t = 10, r = 20, b = 10, l = 20, unit = "mm")
+      plot.margin = margin(t = 14, r = 28, b = 14, l = 28, unit = "mm")
     )
 }

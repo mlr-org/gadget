@@ -11,7 +11,7 @@ The **gadget** R package implements the GADGET algorithm for interpretable machi
 ## Features
 
 - **Interaction detection**: Identifies feature interactions by recursively splitting on heterogeneity of effects.
-- **ALE and PD support**: `AleStrategy` for ALE (computed internally), `PdStrategy` for PD/ICE (via precomputed effects from iml or similar).
+- **ALE and PD support**: `AleStrategy` for ALE (computed internally from model), `PdStrategy` for PD/ICE (via precomputed effects or internal computation from model).
 - **Visualization**: Tree structure plots and regional effect curves (ALE, PD, ICE).
 - **Extensible design**: R6-based strategy pattern; plug in custom effect strategies.
 - **Performance**: Core calculations in C++ (Rcpp/RcppArmadillo).
@@ -32,23 +32,27 @@ Requires R6, ggplot2, data.table, Rcpp; see [DESCRIPTION](DESCRIPTION) for detai
 | Component    | Description                                                                 |
 |-------------|-----------------------------------------------------------------------------|
 | `GadgetTree`| Main entry: `$new()`, `$fit()`, `$plot()`, `$plot_tree_structure()`, `$extract_split_info()` |
-| `AleStrategy` | ALE-based trees; pass `model` to `$fit()`. ALE computed internally.      |
-| `PdStrategy`  | PD/ICE trees; pass `effect` (e.g. from `iml::FeatureEffects`) to `$fit()`. |
+| `AleStrategy` | ALE-based trees; pass `model` to `$fit()`. ALE is computed internally.      |
+| `PdStrategy`  | PD/ICE trees; pass `effect` or pass `model` for internal PD/ICE computation. |
 
 **Fit arguments**
 
 - **AleStrategy-specific**
   - `model` (required): fitted mlr3 learner used to compute ALE.
+  - `effect` (reserved): currently not enabled; reserved for future extension.
   - `n_intervals` (optional): number of intervals for ALE grids (default: `10`).
   - `predict_fun` (optional): custom prediction function; if `NULL`, uses the learner’s default.
   - `order_method` (optional): how to order **categorical split-feature levels** before searching over binary splits.  
     Internally, GADGET builds a pairwise distance matrix between levels (using other features), embeds it into 1D, and uses that 1D order for splitting. Supported methods are:
-    - `"raw"`: keep the original factor level order (no reordering).
-    - `"mds"` (default): multi-dimensional scaling on the level-distance matrix, then order levels by the 1D coordinates.
+    - `"raw"` (default): keep the original factor level order (no reordering).
+    - `"mds"`: multi-dimensional scaling on the level-distance matrix, then order levels by the 1D coordinates.
     - `"pca"`: PCA on the level-distance matrix, then order levels by the first principal component.
     - `"random"`: use a random order of levels (mainly for robustness checks or baselines).
 - **PdStrategy-specific**
-  - `effect` (required): object of class `FeatureEffects` (e.g. from `iml::FeatureEffects`).
+  - `effect` (optional): object of class `FeatureEffects` (e.g. from `iml::FeatureEffects`).
+  - `model` (optional): fitted model used for internal PD/ICE computation when `effect` is not provided.
+  - `n_grid` (optional): number of grid points for numeric PD/ICE computation (default: `20`).
+  - `predict_fun` (optional): custom prediction function for internal PD/ICE computation.
 - **Shared tree arguments (both strategies)**
   - `feature_set` (optional): subset of features used to compute effects and search for splits.
   - `split_feature` (optional): subset of features allowed as splitting variables.
@@ -73,7 +77,8 @@ We first build a PD-based tree (with effects computed via `iml`), then an ALE-ba
 
 ### PD + Bikeshare (requires iml)
 
-For PD/ICE, compute effects with [iml](https://cran.r-project.org/package=iml) first, then pass them to `PdStrategy`:
+For PD/ICE, you can either (A) compute effects with [iml](https://cran.r-project.org/package=iml) and pass them to `PdStrategy`,
+or (B) pass a fitted model and let `gadget` compute PD/ICE internally.
 
 ```r
 library(gadget)
@@ -122,9 +127,9 @@ tree$fit(
 tree$plot_tree_structure()  # prints the tree topology (depth, node IDs, split features)
 tree$extract_split_info()
 tree$plot(
-  effect = effect,
   data = bike_data,
   target_feature_name = "target",
+  effect = effect,
   features = c("hr", "temp")
 )
 ```

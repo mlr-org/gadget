@@ -48,13 +48,19 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Example: Fit and plot a PD tree using PdStrategy and GadgetTree
+#' # PD: `data` and `target_feature_name` come first; pass `effect` and/or `model` via `...`.
 #' pd_strat = PdStrategy$new()
 #' tree = GadgetTree$new(strategy = pd_strat, n_split = 2)
-#' tree$fit(effect, data, target_feature_name = "target")
-#' tree$plot(effect, data, target_feature_name = "target")
+#' tree$fit(data = dat, target_feature_name = "y", effect = effect_obj)
+#' tree$plot(data = dat, target_feature_name = "y", effect = effect_obj)
+#' tree$plot(data = dat, target_feature_name = "y")  # uses cached effect from fit()
 #' tree$plot_tree_structure()
 #' split_info = tree$extract_split_info()
+#'
+#' # ALE: pass `model` (and optional `n_intervals`, `ale_engine`, etc.).
+#' tree_ale = GadgetTree$new(strategy = AleStrategy$new(), n_split = 2)
+#' tree_ale$fit(data = dat, target_feature_name = "y", model = fitted_model)
+#' tree_ale$plot(data = dat, target_feature_name = "y")
 #' }
 #'
 #' @export
@@ -108,16 +114,17 @@ GadgetTree = R6::R6Class(
     #'   Features for splitting; \code{NULL} = all.
     #' @param ... \cr
     #'   Strategy-specific arguments passed to \code{$fit()}.
-    #'   For [AleStrategy]: \code{model}, \code{n_intervals}, \code{predict_fun}, \code{order_method}, \code{with_stab}.
-    #'   For [PdStrategy]: \code{effect}.
+    #'   For [AleStrategy]: \code{model} or \code{effect}, plus optional
+    #'   \code{n_intervals}, \code{predict_fun}, \code{order_method},
+    #'   \code{ale_engine}, \code{with_stab}.
+    #'   For [PdStrategy]: \code{effect}, or \code{model} with optional
+    #'   \code{predict_fun}, \code{n_grid}, and \code{pd_engine}.
     #' @return (`GadgetTree`) \cr
     #'   The tree, invisibly.
     fit = function(data, target_feature_name, feature_set = NULL, split_feature = NULL, ...) {
       checkmate::assert_data_frame(data, .var.name = "data")
       checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
       checkmate::assert_subset(target_feature_name, colnames(data), .var.name = "target_feature_name")
-      checkmate::assert_character(feature_set, null.ok = TRUE, .var.name = "feature_set")
-      checkmate::assert_character(split_feature, null.ok = TRUE, .var.name = "split_feature")
       self$split_benchmark = list()
       self$tree_list_cache = NULL
 
@@ -137,12 +144,12 @@ GadgetTree = R6::R6Class(
 
     #' @description
     #' Plot tree via \code{strategy$plot()}.
-    #' @param effect (R6 or `list()` or `NULL`) \cr
-    #'   Effect object; \code{NULL} for ALE cached effect.
     #' @param data (`data.frame()`) \cr
     #'   Data.
     #' @param target_feature_name (`character(1)`) \cr
     #'   Target name.
+    #' @param effect (R6 or `list()` or `NULL`) \cr
+    #'   Optional effect object; omit or \code{NULL} uses strategy-cached effect from \code{$fit()}.
     #' @param depth (`integer()` or `NULL`) \cr
     #'   Depths to plot.
     #' @param node_id (`integer()` or `NULL`) \cr
@@ -152,13 +159,7 @@ GadgetTree = R6::R6Class(
     #' @param ... Plot arguments.
     #' @return (`list()`) \cr
     #'   Nested list (depth -> node -> patchwork).
-    plot = function(effect = NULL, data, target_feature_name, depth = NULL, node_id = NULL, features = NULL, ...) {
-      checkmate::assert_true(is.null(effect) || is.list(effect) || inherits(effect, "R6"), .var.name = "effect")
-      checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
-      checkmate::assert_data_frame(data, .var.name = "data")
-      checkmate::assert_integerish(depth, lower = 1, null.ok = TRUE, .var.name = "depth")
-      checkmate::assert_integerish(node_id, lower = 1, null.ok = TRUE, .var.name = "node_id")
-      checkmate::assert_character(features, null.ok = TRUE, .var.name = "features")
+    plot = function(data, target_feature_name, effect = NULL, depth = NULL, node_id = NULL, features = NULL, ...) {
       tree_list = self$get_tree_list()
       self$strategy$plot(tree = tree_list, effect = effect, data = data,
         target_feature_name = target_feature_name,
@@ -167,8 +168,19 @@ GadgetTree = R6::R6Class(
 
     #' @description
     #' Converts root to depth-list and calls \code{plot_tree_structure()}. Prints graph.
-    plot_tree_structure = function() {
-      plot_tree_structure(self$get_tree_list())
+    #' @param label_wrap_width (`integer(1)` or `NULL`) \cr
+    #'   Wrap node labels to this many characters per line; \code{NULL} disables wrapping.
+    #' @param node_spread_x,node_spread_y (`numeric(1)`) \cr
+    #'   Layout stretch factors for the ggraph \code{"tree"} layout (larger values separate nodes).
+    plot_tree_structure = function(label_wrap_width = 34L, node_spread_x = 1.55, node_spread_y = 1.12) {
+      checkmate::assert_integerish(label_wrap_width, len = 1L, lower = 8L, null.ok = TRUE,
+        upper = 100L, any.missing = FALSE, .var.name = "label_wrap_width")
+      checkmate::assert_numeric(node_spread_x, len = 1L, lower = 0.5, finite = TRUE, .var.name = "node_spread_x")
+      checkmate::assert_numeric(node_spread_y, len = 1L, lower = 0.5, finite = TRUE, .var.name = "node_spread_y")
+      plot_tree_structure(self$get_tree_list(),
+        label_wrap_width = label_wrap_width,
+        node_spread_x = node_spread_x,
+        node_spread_y = node_spread_y)
     },
 
     #' @description

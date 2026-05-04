@@ -21,14 +21,17 @@
 #'   \code{function(model, data)} returning predictions; \code{NULL} = default.
 #' @param order_method (`character(1)`) \cr
 #'   Categorical level order: \code{"mds"}, \code{"pca"}, \code{"random"}, or \code{"raw"}.
-#'
+#' @param ale_engine (`character(1)`) \cr
+#'   ALE engine: \code{"cpp"} or \code{"r"}; default \code{c("cpp", "r")} resolves to
+#'   \code{"cpp"} via \code{match.arg}.
 #' @return (`list()`) \cr
 #'   \code{Z}: data.table of split features; \code{Y}: list of ALE effect data per feature.
 #'
 #' @details
 #' Steps performed:
 #' \enumerate{
-#'   \item Resolve and validate \code{feature_set} and \code{split_feature} against \code{colnames(data)}.
+#'   \item Resolve \code{feature_set} and \code{split_feature} against feature columns (see
+#'     \code{GadgetTree}/\code{AleStrategy} for target-column validation).
 #'   \item For \code{union(feature_set, split_feature)}, convert character
 #'     columns to factor and order levels via
 #'     \code{order_categorical_levels} (using \code{droplevels} internally).
@@ -53,16 +56,10 @@ prepare_split_data_ale = function(
   feature_set = NULL,
   split_feature = NULL,
   predict_fun = NULL,
-  order_method = "mds"
+  order_method = "raw",
+  ale_engine = c("cpp", "r")
 ) {
-  checkmate::assert_data_frame(data, .var.name = "data")
-  checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
-  checkmate::assert_subset(target_feature_name, colnames(data), .var.name = "target_feature_name")
-  checkmate::assert_integerish(n_intervals, len = 1, lower = 1, any.missing = FALSE, .var.name = "n_intervals")
-  checkmate::assert_character(feature_set, null.ok = TRUE, .var.name = "feature_set")
-  checkmate::assert_character(split_feature, null.ok = TRUE, .var.name = "split_feature")
-  checkmate::assert_function(predict_fun, null.ok = TRUE, .var.name = "predict_fun")
-  checkmate::assert_choice(order_method, c("mds", "pca", "random", "raw"), .var.name = "order_method")
+  ale_engine = match.arg(ale_engine)
   common = prepare_split_data_common(data, target_feature_name, feature_set, split_feature)
   data = common$data
   feature_set = common$feature_set
@@ -73,14 +70,25 @@ prepare_split_data_ale = function(
     }
   }
   Z = data.table::setDT(take_cols(data, split_feature))
-  effect = calculate_ale(
-    model = model,
-    data = data,
-    target_feature_name = target_feature_name,
-    feature_set = feature_set,
-    n_intervals = n_intervals,
-    predict_fun = predict_fun
-  )
+  effect = if (ale_engine == "cpp") {
+    calculate_ale_fast(
+      model = model,
+      data = data,
+      target_feature_name = target_feature_name,
+      feature_set = feature_set,
+      n_intervals = n_intervals,
+      predict_fun = predict_fun
+    )
+  } else {
+    calculate_ale(
+      model = model,
+      data = data,
+      target_feature_name = target_feature_name,
+      feature_set = feature_set,
+      n_intervals = n_intervals,
+      predict_fun = predict_fun
+    )
+  }
 
   list(Z = Z, Y = effect)
 }

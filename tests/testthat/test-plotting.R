@@ -1,3 +1,49 @@
+test_that("track_split_condition formats categorical splits without coercion warnings", {
+  left_child = list(id = 2L, depth = 2L, parent = list(id = 1L))
+  parent_node = list(
+    id = 1L,
+    depth = 1L,
+    parent = NULL,
+    split = list(feature = "var_Structure", value = "M"),
+    children = list(left_child = left_child, right_child = list(id = 3L))
+  )
+  tree = list(list(parent_node), list(left_child))
+  expect_warning(
+    cond <- gadget:::track_split_condition(left_child, tree),
+    regexp = NA
+  )
+  expect_equal(cond, "var_Structure = M")
+})
+
+test_that("merge_ale_y_range_with_response expands ylim to overlaid response", {
+  yr = list(ymin = -1, ymax = 1)
+  out = gadget:::merge_ale_y_range_with_response(yr, c(5, 100))
+  expect_true(out$ymin <= -1)
+  expect_true(out$ymax >= 100)
+})
+
+test_that("calculate_y_range_ale_combined includes regional curve range", {
+  global_curves = list(f = list(mean_effect = data.frame(d_l = c(0, 1))))
+  regional_curves = list(f = list(mean_effect = data.frame(d_l = c(-10, 10))))
+  yr = gadget:::calculate_y_range_ale_combined(global_curves, regional_curves, NULL, NULL)
+  expect_true(yr$ymin <= -10)
+  expect_true(yr$ymax >= 10)
+})
+
+test_that("track_split_condition rounds numeric split values", {
+  left_child = list(id = 2L, depth = 2L, parent = list(id = 1L))
+  parent_node = list(
+    id = 1L,
+    depth = 1L,
+    parent = NULL,
+    split = list(feature = "x1", value = 0.50001),
+    children = list(left_child = left_child, right_child = list(id = 3L))
+  )
+  tree = list(list(parent_node), list(left_child))
+  cond = gadget:::track_split_condition(left_child, tree)
+  expect_equal(cond, "x1 <= 0.5")
+})
+
 test_that("plot_tree_structure works", {
   # Tree: list of depths, each depth = list of nodes (id, id_parent, split_feature, split_value, subset_idx)
   tree = list(

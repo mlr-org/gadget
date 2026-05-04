@@ -31,7 +31,7 @@
 #' that 1D order defines the new level order. Single-level factors or no other
 #' features yield \code{x_cat} unchanged.
 #'
-order_categorical_levels = function(x_cat, data, feature, target_feature_name, order_method = "mds") {
+order_categorical_levels = function(x_cat, data, feature, target_feature_name, order_method = "raw") {
   checkmate::assert_factor(x_cat, .var.name = "x_cat")
   checkmate::assert_data_frame(data, .var.name = "data")
   checkmate::assert_character(feature, len = 1, .var.name = "feature")

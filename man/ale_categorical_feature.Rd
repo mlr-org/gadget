@@ -10,7 +10,10 @@ ale_categorical_feature(
   X,
   feature,
   target_feature_name,
-  predict_fun = NULL
+  predict_fun = NULL,
+  stacked = NULL,
+  idx_lower = NULL,
+  idx_upper = NULL
 )
 }
 \arguments{
@@ -31,6 +34,12 @@ Target name.}
 
 \item{predict_fun}{(`function()` or `NULL`) \cr
 Prediction function.}
+
+\item{stacked}{(`NULL` or [data.table::data.table()]) \cr
+Shared \code{2n}-row design matrix for batched categorical ALE (see numeric branch).}
+
+\item{idx_lower, }{idx_upper (`integer()` or \code{NULL}) \cr
+Row halves in \code{stacked}: plus-vector / minus-vector predictions respectively.}
 }
 \value{
 (`data.table()`) \cr

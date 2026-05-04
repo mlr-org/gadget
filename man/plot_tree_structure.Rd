@@ -4,11 +4,22 @@
 \alias{plot_tree_structure}
 \title{Visualize the Tree Structure}
 \usage{
-plot_tree_structure(tree)
+plot_tree_structure(
+  tree,
+  label_wrap_width = 34L,
+  node_spread_x = 1.55,
+  node_spread_y = 1.12
+)
 }
 \arguments{
 \item{tree}{(`list()`) \cr
 Depth-based list of Node objects.}
+
+\item{label_wrap_width}{(`integer(1)` or `NULL`) \cr
+If not \code{NULL}, wrap each line of node labels to this many characters (see \code{strwrap}).}
+
+\item{node_spread_x, node_spread_y}{(`numeric(1)`) \cr
+Positive multipliers applied to the default \code{"tree"} layout coordinates to separate nodes.}
 }
 \value{
 (ggplot) \cr

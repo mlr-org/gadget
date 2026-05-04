@@ -26,10 +26,12 @@
 #'   \code{function(model, data)} returning predictions.
 #' @field order_method (`character(1)`) \cr
 #'   Categorical order: \code{"mds"}, \code{"pca"}, \code{"random"}, \code{"raw"}.
+#' @field ale_engine (`character(1)`) \cr
+#'   ALE backend after \code{$fit()}: \code{"cpp"} or \code{"r"}.
 #' @field with_stab (`logical(1)`) \cr
 #'   Whether boundary-stabilized splits are enabled.
-#' @field effect_root (`list()`) \cr
-#'   Cached ALE effect at root (for \code{$plot()}).
+#' @field effect (`list()` or `NULL`) \cr
+#'   Cached ALE effect used when \code{$plot()} omits \code{effect}.
 #'
 #' @details
 #' Intended for use through \code{GadgetTree$new(strategy = AleStrategy$new())} and
@@ -54,9 +56,10 @@ AleStrategy = R6::R6Class(
     target_feature_name = NULL,
     n_intervals = NULL,
     predict_fun = NULL,
-    order_method = "mds",
+    order_method = "raw",
+    ale_engine = "cpp",
     with_stab = FALSE,
-    effect_root = NULL,
+    effect = NULL,
 
     #' @description
     #' Create an AleStrategy instance (calls \code{super$initialize("ale")}).
@@ -68,6 +71,8 @@ AleStrategy = R6::R6Class(
     #' Preprocess to Z and Y via \code{prepare_split_data_ale}.
     #' @param model (`any`) \cr
     #'   Fitted model.
+    #' @param effect (`list()` or `NULL`) \cr
+    #'   Reserved for future extension. Currently unsupported.
     #' @param data (`data.frame()` or `data.table()`) \cr
     #'   Data.
     #' @param target_feature_name (`character(1)`) \cr
@@ -82,22 +87,36 @@ AleStrategy = R6::R6Class(
     #'   Prediction function.
     #' @param order_method (`character(1)`) \cr
     #'   Categorical order: \code{"mds"}, \code{"pca"}, \code{"random"}, or \code{"raw"}.
+    #' @param ale_engine (`character(1)`) \cr
+    #'   ALE engine: \code{"cpp"} or \code{"r"}; default \code{c("cpp", "r")} resolves to
+    #'   \code{"cpp"} via \code{match.arg}.
     #' @return (`list()`) \cr
     #'   \code{Z}: split features; \code{Y}: ALE effect data.tables.
-    preprocess = function(model, data, target_feature_name, n_intervals,
+    preprocess = function(model, effect = NULL, data, target_feature_name, n_intervals,
       feature_set = NULL, split_feature = NULL, predict_fun = NULL,
-      order_method = "mds") {
+      order_method = "raw", ale_engine = c("cpp", "r")) {
+      ale_engine = match.arg(ale_engine)
       checkmate::assert_data_frame(data, .var.name = "data")
       checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
+      checkmate::assert_subset(target_feature_name, colnames(data), .var.name = "target_feature_name")
       checkmate::assert_integerish(n_intervals, len = 1, lower = 1, .var.name = "n_intervals")
       checkmate::assert_character(feature_set, null.ok = TRUE, .var.name = "feature_set")
       checkmate::assert_character(split_feature, null.ok = TRUE, .var.name = "split_feature")
       checkmate::assert_function(predict_fun, null.ok = TRUE, .var.name = "predict_fun")
       checkmate::assert_choice(order_method, c("mds", "pca", "random", "raw"), .var.name = "order_method")
-
-      prepare_split_data_ale(model = model, data = data, target_feature_name = target_feature_name,
+      if (!is.null(effect)) {
+        cli::cli_abort(
+          "Direct ALE {.arg effect} input is not enabled yet; please pass {.arg model} and use gadget ALE."
+        )
+      }
+      if (is.null(model)) {
+        cli::cli_abort("{.arg model} is required for AleStrategy$preprocess.")
+      }
+      prepare_split_data_ale(
+        model = model, data = data, target_feature_name = target_feature_name,
         n_intervals = n_intervals, feature_set = feature_set, split_feature = split_feature,
-        predict_fun = predict_fun, order_method = order_method)
+        predict_fun = predict_fun, order_method = order_method, ale_engine = ale_engine
+      )
     },
 
     #' @description
@@ -115,17 +134,13 @@ AleStrategy = R6::R6Class(
     node_transform = function(Y, idx, grid = NULL, split_feature = NULL) {
       assert_ale_effect_list(Y)
       checkmate::assert_integerish(idx, min.len = 1, .var.name = "idx")
+      checkmate::assert_list(grid, null.ok = TRUE, .var.name = "grid")
       checkmate::assert_character(split_feature, len = 1, null.ok = TRUE, .var.name = "split_feature")
 
       node_transform_ale(
         Y = Y,
         idx = idx,
-        split_feature = split_feature,
-        model = self$model,
-        data = self$data,
-        target_feature_name = self$target_feature_name,
-        n_intervals = self$n_intervals,
-        predict_fun = self$predict_fun
+        split_feature = split_feature
       )
     },
 
@@ -150,6 +165,7 @@ AleStrategy = R6::R6Class(
     #'   \code{left_objective_value_j}, \code{right_objective_value_j},
     #'   \code{left_objective_value}, \code{right_objective_value}.
     get_child_objectives = function(Z, Y, split_info, idx_left, idx_right, grid_left, grid_right) {
+      checkmate::assert_list(split_info, .var.name = "split_info")
       raw = split_info$raw_result
       if (is.null(raw) || is.null(raw$left_objective_value_j)) {
         cli::cli_abort("ALE split_info must contain raw_result with left/right objective values.")
@@ -195,7 +211,7 @@ AleStrategy = R6::R6Class(
     #' @param tree (`list()`) \cr
     #'   Depth-based list of Node objects.
     #' @param effect (`list()` or `NULL`) \cr
-    #'   ALE effect; \code{NULL} = use cached \code{effect_root}.
+    #'   ALE effect; \code{NULL} = use cached \code{effect}.
     #' @param data (`data.frame()` or `data.table()`) \cr
     #'   Data.
     #' @param target_feature_name (`character(1)`) \cr
@@ -213,19 +229,10 @@ AleStrategy = R6::R6Class(
     #'   Nested list (depth -> node -> patchwork).
     plot = function(tree, effect = NULL, data, target_feature_name,
       depth = NULL, node_id = NULL, features = NULL,
-      show_plot = TRUE, show_point = FALSE, mean_center = TRUE, ...) {
-      checkmate::assert_list(tree, .var.name = "tree")
-      checkmate::assert_true(is.null(effect) || is.list(effect), .var.name = "effect")
-      checkmate::assert_data_frame(data, .var.name = "data")
-      checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
-      checkmate::assert_integerish(depth, lower = 1, null.ok = TRUE, .var.name = "depth")
-      checkmate::assert_integerish(node_id, lower = 1, null.ok = TRUE, .var.name = "node_id")
-      checkmate::assert_character(features, null.ok = TRUE, .var.name = "features")
-      checkmate::assert_flag(show_plot)
-      checkmate::assert_flag(show_point)
-      checkmate::assert_flag(mean_center)
+      show_plot = TRUE, show_point = TRUE, mean_center = TRUE, ...) {
+      checkmate::assert_subset(target_feature_name, colnames(data), .var.name = "target_feature_name")
       if (is.null(effect)) {
-        effect = self$effect_root
+        effect = self$effect
         if (is.null(effect)) {
           cli::cli_abort("No cached ALE effect found. Please pass 'effect' or run fit() first.")
         }
@@ -242,6 +249,8 @@ AleStrategy = R6::R6Class(
     #'   Tree instance.
     #' @param model (`any`) \cr
     #'   Fitted model.
+    #' @param effect (`list()` or `NULL`) \cr
+    #'   Reserved for future extension. Currently unsupported.
     #' @param data (`data.frame()` or `data.table()`) \cr
     #'   Data.
     #' @param target_feature_name (`character(1)`) \cr
@@ -256,29 +265,39 @@ AleStrategy = R6::R6Class(
     #'   Categorical order.
     #' @param with_stab (`logical(1)`) \cr
     #'   Enable boundary stabilizer.
+    #' @param ale_engine (`character(1)`) \cr
+    #'   ALE engine: \code{"cpp"} or \code{"r"}; default \code{c("cpp", "r")} resolves to
+    #'   \code{"cpp"} via \code{match.arg}.
     #' @param ... Ignored.
     #' @return (`GadgetTree`) \cr
     #'   The tree, invisibly.
-    fit = function(tree, model, data, target_feature_name,
+    fit = function(tree, model, effect = NULL, data, target_feature_name,
       n_intervals = 10, feature_set = NULL, split_feature = NULL,
-      predict_fun = NULL, order_method = "raw", with_stab = FALSE, ...) {
-      if (missing(model)) cli::cli_abort("AleStrategy requires 'model' to be passed.")
+      predict_fun = NULL, order_method = "raw", with_stab = FALSE, ale_engine = c("cpp", "r"), ...) {
       checkmate::assert_r6(tree, classes = "GadgetTree", .var.name = "tree")
       checkmate::assert_data_frame(data, .var.name = "data")
       checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
+      checkmate::assert_subset(target_feature_name, colnames(data), .var.name = "target_feature_name")
       checkmate::assert_integerish(n_intervals, len = 1, lower = 1, .var.name = "n_intervals")
+      checkmate::assert_list(effect, null.ok = TRUE, .var.name = "effect")
       checkmate::assert_character(feature_set, null.ok = TRUE, .var.name = "feature_set")
       checkmate::assert_character(split_feature, null.ok = TRUE, .var.name = "split_feature")
       checkmate::assert_function(predict_fun, null.ok = TRUE, .var.name = "predict_fun")
       checkmate::assert_choice(order_method, c("mds", "pca", "random", "raw"), .var.name = "order_method")
       checkmate::assert_flag(with_stab, .var.name = "with_stab")
+      ale_engine = match.arg(ale_engine)
+      if (is.null(model)) {
+        cli::cli_abort("AleStrategy requires {.arg model} to be passed.")
+      }
+      if (!is.null(effect)) {
+        cli::cli_abort(
+          "Direct ALE {.arg effect} input is not enabled yet; please pass {.arg model} and use gadget ALE."
+        )
+      }
 
-      # Default prediction function for mlr3 models compatibility
       if (is.null(predict_fun)) {
         predict_fun = default_predict_fun
       }
-      # Store parameters for ALE-specific splitting
-      # --- global part (timed) ---
       t_global = system.time({
         self$model = model
         self$data = data
@@ -286,15 +305,16 @@ AleStrategy = R6::R6Class(
         self$n_intervals = n_intervals
         self$predict_fun = predict_fun
         self$order_method = order_method
+        self$ale_engine = ale_engine
         self$with_stab = with_stab
         self$tree_ref = tree
-        prepared_data = self$preprocess(model = model, data = data,
+        prepared_data = self$preprocess(model = model, effect = effect, data = data,
           target_feature_name = target_feature_name, n_intervals = n_intervals,
           feature_set = feature_set, split_feature = split_feature,
-          predict_fun = predict_fun, order_method = order_method)
+          predict_fun = predict_fun, order_method = order_method, ale_engine = ale_engine)
         Z = prepared_data$Z
         Y = prepared_data$Y
-        self$effect_root = Y
+        self$effect = Y
         grid = vector("list", length(names(Z)))
         names(grid) = names(Z)
         objective_value_root_j = self$heterogeneity(Y)
@@ -303,14 +323,15 @@ AleStrategy = R6::R6Class(
 
       t_regional = private$fit_tree_internal(tree, Z, Y, grid, objective_value_root_j, objective_value_root)
       self$fit_timing = list(global = t_global, regional = t_regional)
-      cli::cli_inform("AleStrategy fit timing: global {round(t_global, 3)}s, regional {round(t_regional, 3)}s")
       invisible(tree)
     },
     #' @description
-    #' Sets \code{data} and \code{model} to NULL to free memory. Returns NULL.
+    #' Sets \code{data} and \code{model} to \code{NULL} to free memory after fitting.
+    #' \code{effect} is intentionally retained because \code{plot()} requires it post-fit.
     clean = function() {
       self$data = NULL
       self$model = NULL
+      self$tree_ref = NULL
     }
   )
 )

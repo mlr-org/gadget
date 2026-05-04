@@ -2,7 +2,7 @@
 % Please edit documentation in R/mean_center_ice.R
 \name{mean_center_ice}
 \alias{mean_center_ice}
-\title{Extract and optionally mean-center effect matrices}
+\title{Build wide effect matrices from iml-style effect containers}
 \usage{
 mean_center_ice(effect, feature_set = NULL, mean_center = TRUE)
 }
@@ -14,31 +14,24 @@ Effect object with \code{results} field (e.g. from FeatureEffect).}
 Features to include; \code{NULL} = all.}
 
 \item{mean_center}{(`logical(1)`) \cr
-Whether to mean-center each effect matrix.}
+Whether to mean-center each effect matrix row-wise.}
 }
 \value{
 (`list()`) \cr
-  \code{Y}: named list of effect matrices; \code{grid}: grid values per feature.
+  \code{Y}: named list of matrices per feature; \code{grid}: column names (grid coordinates) per feature.
 }
 \description{
-Given effect (with \code{results}), feature_set (or all), and mean_center:
-pivots effect results to wide matrices per feature; optionally subtracts
-row means.
-Returns list \code{Y} (named list of matrices), \code{grid} (column names per feature).
+Expects \code{effect$results} as either a single \code{data.frame} or a named list of
+per-feature tables. Delegates pivoting to \code{pivot_effect_to_wide}.
 }
 \details{
-If the effect results are in `data.frame` format, the function
-pivots the data to wide format and mean-centers if requested.
-If the effect results are a list, each element is processed similarly.
-The grid contains the unique values (or bins) for each feature.
-This function is typically used internally for preparing data for
-effect tree construction and visualization.
+If \code{effect$results} is a \code{data.frame}, one feature is inferred from column names.
+If it is a named list, each element is pivoted separately.
 }
 \examples{
-# Example usage (assuming 'effect' is an object with a 'results' field
-# from FeatureEffect):
-# result <- mean_center_ice(effect, feature_set = c("feature1", "feature2"), mean_center = TRUE)
-# Y <- result$Y
-# grid <- result$grid
+# result = mean_center_ice(effect, feature_set = c("feature1", "feature2"), mean_center = TRUE)
+# Y = result$Y
+# grid = result$grid
 
 }
+\keyword{internal}

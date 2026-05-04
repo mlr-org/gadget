@@ -57,7 +57,7 @@ Left and right child nodes (or NULL for terminal nodes).}
 Whether the minimal node size or improvement threshold has been reached.}
 
 \item{\code{improvement_met}}{(`logical(1)`) \cr
-Whether the improvement threshold was not met.}
+Whether the improvement-based stop criterion was met (`TRUE` = stop splitting).}
 
 \item{\code{strategy}}{(PdStrategy | AleStrategy) \cr
 Strategy for effect-specific operations.}
@@ -131,7 +131,7 @@ Objective values per feature.}
 Total objective value.}
 
 \item{\code{improvement_met}}{(`logical(1)`) \cr
-Whether improvement threshold was not met.}
+Whether improvement threshold was met.}
 
 \item{\code{int_imp}}{(`numeric(1)` or `NULL`) \cr
 Interaction importance.}

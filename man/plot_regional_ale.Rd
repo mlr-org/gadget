@@ -7,6 +7,8 @@
 plot_regional_ale(
   curves,
   color_ale = "lightcoral",
+  target_feature_name,
+  mean_center = TRUE,
   ymin = NULL,
   ymax = NULL,
   show_point = FALSE,
@@ -20,6 +22,13 @@ Output of \code{prepare_plot_data_ale} for a node.}
 
 \item{color_ale}{(`character(1)`) \cr
 Color for ALE curves.}
+
+\item{target_feature_name}{(`character(1)`) \cr
+Target column name; used as the y-axis label (same convention as PD plots).}
+
+\item{mean_center}{(`logical(1)`) \cr
+Whether ALE curves are mean-centered; controls legend text (\code{"Mean centered ALE"} vs
+\code{"ALE"}), matching PD ICE/PDP labeling.}
 
 \item{ymin, ymax}{(`numeric(1)` or `NULL`) \cr
 Y-axis limits.}

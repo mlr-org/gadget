@@ -94,9 +94,9 @@ dev.off()
 
 # collect all regional PD/ICE plots (depth x node)
 pl_pd_bike_all = tree_pd_bike$plot(
-  effect = effect_bike,
   data = bike_data,
   target_feature_name = "target",
+  effect = effect_bike,
   features = c("hr", "temp"),
   show_plot = FALSE
 )

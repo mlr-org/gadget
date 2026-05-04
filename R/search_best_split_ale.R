@@ -16,7 +16,7 @@ build_ale_interval_stats = function(effect, features) {
   K = integer(p)
   for (j in seq_len(p)) {
     DT = effect[[features[j]]]
-    data.table::setorder(DT, row_id)
+    data.table::setorder(DT, row_id)  # intentional in-place sort: d_l_mat columns must align with original row indices for ale_sweep_cpp
     S = unique(DT[, list(interval_index, n = int_n, s1 = int_s1, s2 = int_s2)])
     data.table::setorder(S, interval_index)
     stats_list[[j]] = S
@@ -86,8 +86,6 @@ search_best_split_ale = function(
 ) {
   split_feature_names = colnames(Z)
   if (is.null(split_feature_names)) cli::cli_abort("Z (split features) must have column names.")
-  t_start = proc.time()
-
   st_table = build_ale_interval_stats(effect, names(effect))
   # Per split_feature, compute best split once and capture per-feature vectors
   per_feature_res = lapply(split_feature_names, function(split_feat) {
@@ -116,7 +114,6 @@ search_best_split_ale = function(
     res$is_categorical = is.factor(Z[[split_feat]])
     res
   })
-  t_end = proc.time()
 
   # Long format rows
   res = data.table::rbindlist(lapply(per_feature_res, function(res) {
@@ -140,11 +137,10 @@ search_best_split_ale = function(
     )
   }), fill = TRUE)
 
-  min_obj = min(res$split_objective, na.rm = TRUE)
+  min_obj = if (any(is.finite(res$split_objective))) min(res$split_objective, na.rm = TRUE) else Inf
   res$best_split = is.finite(min_obj) & (res$split_objective == min_obj)
-  res$split_runtime = (t_end - t_start)[[3]]
   res[, c("split_feature", "is_categorical", "split_point",
       "split_objective", "feature", "objective_value_j",
       "left_objective_value_j", "right_objective_value_j",
-      "split_runtime", "best_split")]
+      "best_split")]
 }

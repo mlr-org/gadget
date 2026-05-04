@@ -7,7 +7,6 @@
 
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>
-#include <chrono>
 #include <algorithm>
 
 using namespace Rcpp;
@@ -41,7 +40,7 @@ inline double quantile_type7(const NumericVector& x, double p) {
 /* Convert R matrix to Armadillo (zero-copy when possible). */
 inline arma::mat arma_view(SEXP obj) {
   if (!Rf_isMatrix(obj) || TYPEOF(obj) != REALSXP) {
-    static Rcpp::Function as_matrix("as.matrix");
+    Rcpp::Function as_matrix("as.matrix");
     obj = as_matrix(obj);
   }
   Rcpp::NumericMatrix M(obj);
@@ -113,8 +112,8 @@ List search_best_split_point_cpp_internal(
       // Calculate objective function for this split
       double obj = 0.0;
       for (int l = 0; l < Ly; ++l) {
-        const arma::rowvec SL = SumL[l][k];        // const = read-only reference to avoid copying
-        const arma::rowvec SR = S_tot[l] - SL;     // const = read-only reference to avoid copying
+        const arma::rowvec SL = SumL[l][k];
+        const arma::rowvec SR = S_tot[l] - SL;
         obj += arma::accu( - SL%SL / NL - SR%SR / NR );
       }
 
@@ -252,7 +251,6 @@ DataFrame search_best_split_cpp(
   LogicalVector   is_cat_vec(p);
   CharacterVector split_point_out(p);
   NumericVector   split_obj(p);
-  NumericVector   split_runtime(p);
 
   // Preprocess all Y matrices' NaN values to avoid repeated processing
   const int Ly = Y.size();
@@ -263,10 +261,6 @@ DataFrame search_best_split_cpp(
     Ym[l].replace(arma::datum::nan, 0.0);  // Process all NaN values once
     S_tot[l] = arma::sum(Ym[l], 0);        // Precompute column sums
   }
-  // Start timing
-  auto t0 = std::chrono::high_resolution_clock::now();
-
-
   // Evaluate each feature
   for (int j = 0; j < p; ++j) {
     SEXP z_j  = Z[j];
@@ -282,17 +276,15 @@ DataFrame search_best_split_cpp(
     split_obj[j]       = res["split_objective"];
     split_point_out[j] = as<CharacterVector>(wrap(res["split_point"]))[0];
   }
-  // Calculate total runtime and identify best split
-  auto t1 = std::chrono::high_resolution_clock::now();
-  split_runtime.fill(std::chrono::duration<double>(t1 - t0).count());
-
-  // Find best valid split (filter out NA/NaN split points)
+  // Find best valid split.
+  // The internal function always returns R_PosInf when no split is found, so
+  // split_obj[j] < best_val (with best_val = R_PosInf) is sufficient: R_PosInf < R_PosInf
+  // is false, correctly excluding invalid features without inspecting the split point string.
   double best_val = R_PosInf;
   int best_idx = -1;
-  
+
   for (int j = 0; j < p; ++j) {
-    std::string split_point_str = as<std::string>(split_point_out[j]);
-    if (split_point_str != "NA" && split_point_str != "NaN" && split_obj[j] < best_val) {
+    if (split_obj[j] < best_val) {
       best_val = split_obj[j];
       best_idx = j;
     }
@@ -309,7 +301,6 @@ DataFrame search_best_split_cpp(
     _["is_categorical"]  = is_cat_vec,
     _["split_point"]     = split_point_out,
     _["split_objective"] = split_obj,
-    _["split_runtime"]   = split_runtime,
     _["best_split"]      = best_split
   );
 }

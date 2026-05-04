@@ -31,13 +31,14 @@ library(pryr)
 
 Both ALE and PD show the average model prediction over the feature. The difference is that ALE are computed as accumulated differences over the conditional prediction distribution and PD over the marginal distribution. ICE curves describe how would one single observation change when one feature changes and can be combined with PD plots (for all observations).
 
-These effects can be pre-computed by the **iml** package or within the gadget package itself, and are then passed as input to the gadget `$fit()` function.
+For **PD/ICE**, you can pre-compute effects with **iml** and pass them to `$fit()`, or pass a fitted **mlr3** learner as `model` and let gadget build ICE/PD internally.
+For **ALE**, pass the fitted learner as `model`; gadget computes ALE internally (external ALE summaries are not accepted as `effect` yet).
 
 The gadget workflow would be as follows:
 
 1.  **Feature Effect Selection**: Choose a suitable feature effect method
 
-2.  **Feature Effect Computation**: Compute local feature effects for all (or subset of) observations from a fitted machine learning model either externally (e.g. for ICE/ PD) or internally (e.g. for ALE).
+2.  **Feature Effect Computation**: Obtain ICE/PD either externally (e.g. **iml**) or internally from the fitted learner; obtain ALE internally from the learner (gadget’s ALE path).
 
 3.  **(Optional) Feature Set Selection**: Define interacting feature set (feature of interest) and splitting feature set. Interacting features and splitting features can be distinct, or partially, or fully overlap with each other. By default we use all features as both interacting feature set and splitting feature set.
 
@@ -69,34 +70,49 @@ syn_effect = FeatureEffects$new(syn_predictor, grid.size = 20, method = "ice")
 
 ### ICE/PDP Method: Fit and visualize the explanation tree
 
+`PdStrategy` supports two input modes:
+
+1. Pass a precomputed `effect` object (for example from `iml`).
 ```{r}
-syn_tree_pd = GadgetTree$new(strategy = PdStrategy$new(), n_split = 4, impr_par = 0.1, min_node_size = 1)
-syn_tree_pd$fit(effect = syn_effect, data = syn_data, target_feature_name = "y")
-syn_tree_pd$plot_tree_structure()
-syn_esi_pd = syn_tree_pd$extract_split_info()
-print(syn_esi_pd)
-syn_tree_pd$plot(syn_effect, syn_data, target_feature_name = "y",
+syn_tree_pd_effect = GadgetTree$new(strategy = PdStrategy$new(), n_split = 4, impr_par = 0.1, min_node_size = 1)
+syn_tree_pd_effect$fit(data = syn_data, target_feature_name = "y", effect = syn_effect)
+syn_tree_pd_effect$plot_tree_structure()
+syn_esi_pd_effect = syn_tree_pd_effect$extract_split_info()
+print(syn_esi_pd_effect)
+syn_tree_pd_effect$plot(effect = syn_effect, data = syn_data, target_feature_name = "y",
+  show_plot = TRUE, show_point = TRUE, mean_center = TRUE)
+```
+
+2. Pass a fitted `model` and let `gadget` compute ICE/PD internally.
+```{r}
+syn_tree_pd_model = GadgetTree$new(strategy = PdStrategy$new(), n_split = 4, impr_par = 0.1, min_node_size = 1)
+syn_tree_pd_model$fit(data = syn_data, target_feature_name = "y", model = syn_learner, n_grid = 20L)
+syn_tree_pd_model$plot_tree_structure()
+syn_esi_pd_model = syn_tree_pd_model$extract_split_info()
+print(syn_esi_pd_model)
+syn_tree_pd_model$plot(data = syn_data, target_feature_name = "y",
   show_plot = TRUE, show_point = TRUE, mean_center = TRUE)
 ```
 
 ### ALE Method
 
+`AleStrategy` currently supports the built-in ALE path via `model`.
+The `effect` argument is reserved for future extension and is not enabled yet.
+This is because gadget's splitting and node-wise heterogeneity require per-sample local ALE increments,
+whereas current `iml` and `ALEPlot` outputs provide interval-level ALE summaries rather than sample-level effects.
+Therefore, these outputs cannot currently be used as direct `effect` input for gadget.
+
 ```{r}
-syn_tree_ale = GadgetTree$new(strategy = AleStrategy$new(), n_split = 3)
-syn_tree_ale$fit(model = syn_learner, data = syn_data, target_feature_name = "y", n_intervals = 10)
-syn_tree_ale$plot_tree_structure()
-syn_esi_ale = syn_tree_ale$extract_split_info()
+syn_tree_ale_model = GadgetTree$new(strategy = AleStrategy$new(), n_split = 3)
+syn_tree_ale_model$fit(data = syn_data, target_feature_name = "y", model = syn_learner, n_intervals = 10)
+syn_tree_ale_model$plot_tree_structure()
+syn_esi_ale = syn_tree_ale_model$extract_split_info()
 print(syn_esi_ale)
-object_size(syn_tree_ale)
+object_size(syn_tree_ale_model)
 ```
 
 ```{r}
-syn_tree_ale$plot(
-  data = syn_data,
-  target_feature_name = "y",
-  depth = NULL,
-  show_plot = TRUE
-)
+syn_tree_ale_model$plot(data = syn_data, target_feature_name = "y")
 ```
 
 
@@ -105,7 +121,6 @@ syn_tree_ale$plot(
 ### ICE/PDP Method: Get feature effects
 
 ```{r}
-library(ISLR2)
 data(Bikeshare)
 set.seed(123)
 bike = data.table(Bikeshare[sample(1:8645, 1000), ])
@@ -134,13 +149,29 @@ effect_all = FeatureEffects$new(bike_predictor, method = "ice",
 
 ### ICE/PDP Method: Fit and visualize the explanation tree
 
+Mode A: precomputed iml effect
 ```{r}
-bike_tree_pd = GadgetTree$new(strategy = PdStrategy$new(), n_split = 4)
-bike_tree_pd$fit(effect = effect_all, data = bike_data, target_feature_name = "target")
-bike_tree_pd$plot_tree_structure()
-bike_esi_pd = bike_tree_pd$extract_split_info()
-print(bike_esi_pd)
-bike_tree_pd$plot(effect_all, bike_data, target_feature_name = "target",
+bike_tree_pd_effect = GadgetTree$new(strategy = PdStrategy$new(), n_split = 4)
+bike_tree_pd_effect$fit(data = bike_data, target_feature_name = "target", effect = effect_all)
+bike_tree_pd_effect$plot_tree_structure()
+bike_esi_pd_effect = bike_tree_pd_effect$extract_split_info()
+print(bike_esi_pd_effect)
+bike_tree_pd_effect$plot(effect = effect_all, data = bike_data, target_feature_name = "target",
+  show_plot = TRUE, show_point = TRUE, mean_center = FALSE,
+  depth = NULL,
+  node_id = NULL,
+  features = c("hr", "temp")
+)
+```
+
+Mode B: internal ICE/PD from learner
+```{r}
+bike_tree_pd_model = GadgetTree$new(strategy = PdStrategy$new(), n_split = 4)
+bike_tree_pd_model$fit(data = bike_data, target_feature_name = "target", model = bike_learner, n_grid = 20L)
+bike_tree_pd_model$plot_tree_structure()
+bike_esi_pd_model = bike_tree_pd_model$extract_split_info()
+print(bike_esi_pd_model)
+bike_tree_pd_model$plot(data = bike_data, target_feature_name = "target",
   show_plot = TRUE, show_point = TRUE, mean_center = FALSE,
   depth = NULL,
   node_id = NULL,
@@ -151,34 +182,38 @@ bike_tree_pd$plot(effect_all, bike_data, target_feature_name = "target",
 ### ALE Method
 
 ```{r}
-bike_tree_ale = GadgetTree$new(strategy = AleStrategy$new(), impr_par = 0.01, n_split = 2)
-bike_tree_ale$fit(model = bike_learner, data = bike_data, target_feature_name = "target", n_intervals = 10)
-bike_tree_ale$plot_tree_structure()
-bike_esi_ale = bike_tree_ale$extract_split_info()
+bike_tree_ale_model = GadgetTree$new(strategy = AleStrategy$new(), impr_par = 0.01, n_split = 2)
+bike_tree_ale_model$fit(data = bike_data, target_feature_name = "target", model = bike_learner, n_intervals = 10)
+bike_tree_ale_model$plot_tree_structure()
+bike_esi_ale = bike_tree_ale_model$extract_split_info()
 print(bike_esi_ale)
 ```
 
 ```{r}
-bike_tree_ale$plot(
+bike_tree_ale_model$plot(
   data = bike_data,
   target_feature_name = "target",
   mean_center = FALSE,
   show_point = TRUE,
-  show_plot = TRUE
+  depth = NULL,
+  node_id = NULL,
+  features = c("hr", "temp")
 )
 ```
 
 ```{r}
-object_size(bike_esi_ale)
+object_size(bike_tree_ale_model)
 ```
 
 ## Speed
 
 ```{r}
-boxplot(time ~ depth, data = syn_esi_pd, main = "Distribution of split time per depth - Syn.PD")
-boxplot(time ~ depth, data = syn_esi_ale, main = "Distribution of split time per depth - Syn.ALE")
-boxplot(time ~ depth, data = bike_esi_pd, main = "Distribution of split time per depth - Bike.PD")
-boxplot(time ~ depth, data = bike_esi_ale, main = "Distribution of split time per depth - Bike.ALE")
+par(mfrow = c(2, 2))
+boxplot(time ~ depth, data = syn_esi_pd_model, main = "Split time vs depth — Syn.PD (internal)")
+boxplot(time ~ depth, data = syn_esi_ale, main = "Split time vs depth — Syn.ALE")
+boxplot(time ~ depth, data = bike_esi_pd_model, main = "Split time vs depth — Bike.PD (internal)")
+boxplot(time ~ depth, data = bike_esi_ale, main = "Split time vs depth — Bike.ALE")
+par(mfrow = c(1, 1))
 ```
 
 ## GadgetTree fit benchmark
@@ -295,7 +330,7 @@ for (n in n_list) {
     gc()
     # Create and fit tree
     tree = GadgetTree$new(strategy = PdStrategy$new(), n_split = 10)
-    tree$fit(effect = sim$eff, data = sim$dat, target_feature_name = "y")
+    tree$fit(data = sim$dat, target_feature_name = "y", effect = sim$eff)
     # Clean memory after tree fitting
     gc()
     # Calculate tree size and memory usage
@@ -320,7 +355,7 @@ for (n in n_list) {
         # Clean memory
         gc()
         tree = GadgetTree$new(strategy = PdStrategy$new(), n_split = 10)
-        tree$fit(effect = sim$eff, data = sim$dat, target_feature_name = "y")
+        tree$fit(data = sim$dat, target_feature_name = "y", effect = sim$eff)
         # Clean memory
         gc()
       },

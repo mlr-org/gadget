@@ -15,7 +15,7 @@ Whether to mean-center the ALE curve.}
 }
 \value{
 (`data.table()`) \cr
-  Cumulative ALE with \code{x_grid} and \code{.value}.
+  Cumulative ALE with \code{x_grid} and cumulative values in column \code{d_l}.
 }
 \description{
 Given ALE data.table for one feature and mean_center: cumsums d_l by interval;

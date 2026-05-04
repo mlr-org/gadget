@@ -1,3 +1,12 @@
+# Format split threshold for path labels: numeric rounded; factors/character as label (no as.numeric).
+format_split_condition_value = function(v) {
+  if (is.numeric(v)) {
+    as.character(round(v, 3L))
+  } else {
+    as.character(v)
+  }
+}
+
 #' Build path of split conditions from root to node
 #'
 #' Given node and tree (depth-list): walks parent chain via \code{find_node_by_id};
@@ -12,13 +21,14 @@
 #'   Conditions from root to node (e.g. \code{"x <= 0.5"}).
 #' @keywords internal
 track_split_condition = function(node, tree) {
-  path_conditions = c()
+  path_conditions = character(0)
   current_node = node
   while (!is.null(current_node$parent)) {
     parent_node = find_node_by_id(tree[[current_node$depth - 1]], current_node$parent$id)
     if (is.null(parent_node)) break
     op = choose_operator(parent_node, current_node)
-    cond = paste0(parent_node$split$feature, " ", op, " ", round(as.numeric(parent_node$split$value), 3))
+    val_txt = format_split_condition_value(parent_node$split$value)
+    cond = paste0(parent_node$split$feature, " ", op, " ", val_txt)
     path_conditions = c(cond, path_conditions)
     current_node = parent_node
   }

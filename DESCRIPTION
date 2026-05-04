@@ -17,7 +17,7 @@ Description: Implements the GADGET (General Additive Decomposition based on Glob
     both ALE and PD strategies, integrates with 'mlr3' and 'iml', and provides
     visualization of the interaction tree and regional effect plots.
 License: MIT
-Depends: R (>= 4.5.0)
+Depends: R (>= 4.3.0)
 URL: https://github.com/mlr-org/gadget
 BugReports: https://github.com/mlr-org/gadget/issues
 Encoding: UTF-8
@@ -53,8 +53,10 @@ Collate:
     'PdStrategy.R'
     'RcppExports.R'
     'calculate_ale.R'
+    'calculate_ale_fast.R'
     'calculate_ale_heterogeneity.R'
     'choose_operator.R'
+    'calculate_pd.R'
     'convert_tree_to_list.R'
     'extract_split_info.R'
     'factor_to_numeric.R'

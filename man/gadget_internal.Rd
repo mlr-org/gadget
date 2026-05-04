@@ -8,6 +8,10 @@
 \alias{re_mean_center_ice_cpp}
 \alias{search_best_split_cpp}
 \alias{default_predict_fun}
+\alias{predict_newdata_fast_dispatch}
+\alias{extract_numeric_prediction}
+\alias{has_predict_method}
+\alias{cpp_pd_stack_newdata}
 \alias{risk_from_stats}
 \alias{assert_ale_effect_list}
 \alias{d_l}
