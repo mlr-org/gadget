@@ -1,0 +1,21 @@
+# Bytecode / cache (Python benchmarks)
+__pycache__/
+*.py[cod]
+
+# Ephemeral launcher state
+logs/*.pid
+logs/*.log
+
+# Study plan kept local (not shipped in git)
+efficiency_benchmark_plan.md
+
+# Regenerable bulk inputs (use generate_* scripts)
+data/
+
+# All tabular outputs under results/ (code + figures only in git; no CSV)
+results/**/*.csv
+results/**/*.log
+results/**/*.txt
+results/*.txt
+
+.DS_Store
