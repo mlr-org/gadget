@@ -163,7 +163,8 @@ Node = R6::R6Class("Node", public = list(
     }
     # 3. Create left and right child nodes
     children_info = tryCatch({
-      self$create_children(Z[[split_info$split_feature]], Y, split_info, objective_value_root_j, objective_value_root, impr_par)
+      self$create_children(Z[[split_info$split_feature]], Y, split_info,
+        objective_value_root_j, objective_value_root, impr_par)
     }, error = function(e) {
       cli::cli_warn("create_children error at node {self$id} (depth {self$depth}): {e$message}")
       NULL
@@ -243,7 +244,7 @@ Node = R6::R6Class("Node", public = list(
   #' creates left/right Node instances and sets parent info.
   #' Returns list of \code{left_child}, \code{right_child}, \code{int_imp},
   #' \code{int_imp_j} or NULL if improvement too small.
-  #' @param Z_split.feature (`numeric()`) \cr
+  #' @param z_split_feature (`numeric()`) \cr
   #'   Numeric vector. Values of the splitting feature of this split.
   #' @param Y (`list()`) \cr
   #'   Effect list.
@@ -257,12 +258,12 @@ Node = R6::R6Class("Node", public = list(
   #'   Improvement threshold.
   #' @return (`list()`) \cr
   #'   Left/right child nodes and split statistics.
-  create_children = function(Z_split.feature, Y, split_info, objective_value_root_j, objective_value_root, impr_par) {
+  create_children = function(z_split_feature, Y, split_info, objective_value_root_j, objective_value_root, impr_par) {
     split_feature = split_info$split_feature
     split_value = split_info$split_value
     is_categorical = split_info$is_categorical
     # Get indices for children
-    z_sub = Z_split.feature[self$subset_idx]
+    z_sub = z_split_feature[self$subset_idx]
     if (is_categorical) {
       idx_left = self$subset_idx[which(z_sub == split_value)]
       idx_right = self$subset_idx[which(z_sub != split_value)]
@@ -298,7 +299,7 @@ Node = R6::R6Class("Node", public = list(
     left_child = Node$new(
       id = 2 * self$id, depth = self$depth + 1,
       subset_idx = idx_left, grid = grid_info$grid_left, id_parent = self$id,
-      child_type = if (is.factor(Z_split.feature)) "==" else "<=",
+      child_type = if (is.factor(z_split_feature)) "==" else "<=",
       objective_value_parent = self$objective$value,
       objective_value = left_objective_value,
       objective_value_j = left_objective_value_j,
@@ -309,7 +310,7 @@ Node = R6::R6Class("Node", public = list(
     right_child = Node$new(
       id = 2 * self$id + 1, depth = self$depth + 1,
       subset_idx = idx_right, grid = grid_info$grid_right, id_parent = self$id,
-      child_type = if (is.factor(Z_split.feature)) "!=" else ">",
+      child_type = if (is.factor(z_split_feature)) "!=" else ">",
       objective_value_parent = self$objective$value,
       objective_value = right_objective_value,
       objective_value_j = right_objective_value_j,

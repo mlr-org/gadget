@@ -11,6 +11,7 @@
 #'
 #' @return (`list()`) \cr
 #'   Mean-centered matrices per feature.
+#' @keywords internal
 re_mean_center_ice = function(Y, grid, idx) {
   feature_names = names(Y)
   y_centered = lapply(seq_along(Y), function(i) {

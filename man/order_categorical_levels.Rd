@@ -50,3 +50,4 @@ The \eqn{K \times K} distance matrix is embedded in 1D via \code{order_method};
 that 1D order defines the new level order. Single-level factors or no other
 features yield \code{x_cat} unchanged.
 }
+\keyword{internal}

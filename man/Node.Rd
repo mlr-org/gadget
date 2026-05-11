@@ -247,7 +247,7 @@ Returns list of \code{left_child}, \code{right_child}, \code{int_imp},
 \code{int_imp_j} or NULL if improvement too small.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Node$create_children(
-  Z,
+  z_split_feature,
   Y,
   split_info,
   objective_value_root_j,
@@ -259,8 +259,8 @@ Returns list of \code{left_child}, \code{right_child}, \code{int_imp},
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{Z}}{(`data.frame()` or `data.table()`) \cr
-Split features.}
+\item{\code{z_split_feature}}{(`numeric()`) \cr
+Numeric vector. Values of the splitting feature of this split.}
 
 \item{\code{Y}}{(`list()`) \cr
 Effect list.}

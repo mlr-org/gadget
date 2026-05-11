@@ -1,3 +1,29 @@
+#' Calculate Partial Dependence Curves
+#'
+#' Computes ICE (Individual Conditional Expectation) matrices for each feature
+#' in \code{feature_set} and returns them in long-format data.tables.
+#'
+#' @param model (`any`) \cr
+#'   Fitted model with a predict interface.
+#' @param data (`data.frame()` or `data.table()`) \cr
+#'   Training data including the target column.
+#' @param target_feature_name (`character(1)`) \cr
+#'   Name of the target variable; excluded from feature columns.
+#' @param feature_set (`character()` or `NULL`) \cr
+#'   Features to compute PD for; \code{NULL} = all non-target columns.
+#' @param predict_fun (`function()` or `NULL`) \cr
+#'   \code{function(model, data)} returning a numeric vector; \code{NULL} = default.
+#' @param n_grid (`integer(1)`) \cr
+#'   Number of quantile-based grid points for numeric features.
+#' @param pd_engine (`character(1)`) \cr
+#'   Backend: \code{"cpp"} (default) or \code{"r"}.
+#'
+#' @return (`list()`) \cr
+#'   Named list with element \code{results}: a named list of data.tables, one per
+#'   feature, each with columns \code{.id}, \code{.type}, \code{.feature},
+#'   \code{.borders}, \code{.value}.
+#'
+#' @keywords internal
 calculate_pd = function(model, data, target_feature_name, feature_set = NULL,
   predict_fun = NULL, n_grid = 20L, pd_engine = c("cpp", "r")) {
   pd_engine = match.arg(pd_engine)
@@ -47,6 +73,35 @@ calculate_pd = function(model, data, target_feature_name, feature_set = NULL,
 }
 
 
+#' Compute ICE Matrix (Dispatch)
+#'
+#' Dispatches ICE computation to the C++ or R backend based on \code{pd_engine}.
+#'
+#' @param model (`any`) \cr
+#'   Fitted model.
+#' @param data (`data.frame()` or `data.table()`) \cr
+#'   Feature data (target column already removed).
+#' @param feature (`character(1)`) \cr
+#'   Name of the focal feature.
+#' @param grid (`atomic vector`) \cr
+#'   Grid values for the focal feature.
+#' @param predict_fun (`function()` or `NULL`) \cr
+#'   Custom predict function; \code{NULL} = default.
+#' @param pd_engine (`character(1)`) \cr
+#'   \code{"cpp"} or \code{"r"}.
+#' @param base_data_dt (`data.table()` or `NULL`) \cr
+#'   Pre-converted data.table of \code{data}; avoids repeated conversion.
+#' @param cols_list (`list()` or `NULL`) \cr
+#'   Pre-extracted column list of \code{base_data_dt}; used by the C++ path.
+#' @param feature_index (`integer(1)` or `NULL`) \cr
+#'   1-based column index of \code{feature} in \code{base_data_dt}; used by the C++ path.
+#' @param stacked_pd_cache (`list()` or `NULL`) \cr
+#'   Pre-allocated stacked data.table cache for the R path; \code{NULL} disables caching.
+#'
+#' @return (`matrix`) \cr
+#'   Numeric matrix of shape \code{n_obs x length(grid)} containing ICE predictions.
+#'
+#' @keywords internal
 compute_ice = function(
   model, data, feature, grid, predict_fun = NULL,
   pd_engine = c("cpp", "r"), base_data_dt = NULL,
@@ -70,6 +125,32 @@ compute_ice = function(
 }
 
 
+#' Compute ICE Matrix (Pure R)
+#'
+#' Builds a stacked prediction data.table by repeating each row once per grid
+#' value, replaces the focal feature column with each grid value, runs
+#' \code{pd_predict}, and reshapes predictions into a matrix.
+#'
+#' @param model (`any`) \cr
+#'   Fitted model.
+#' @param data (`data.frame()` or `data.table()`) \cr
+#'   Feature data (target removed).
+#' @param feature (`character(1)`) \cr
+#'   Name of the focal feature.
+#' @param grid (`atomic vector`) \cr
+#'   Grid values for the focal feature.
+#' @param predict_fun (`function()` or `NULL`) \cr
+#'   Custom predict function; \code{NULL} = default.
+#' @param base_data_dt (`data.table()` or `NULL`) \cr
+#'   Pre-converted data.table; avoids repeated conversion.
+#' @param stacked_pd_cache (`list()` or `NULL`) \cr
+#'   Pre-allocated stacked table with elements \code{stacked}, \code{max_g},
+#'   \code{n_obs}; \code{NULL} disables caching.
+#'
+#' @return (`matrix`) \cr
+#'   Numeric matrix of shape \code{n_obs x length(grid)}.
+#'
+#' @keywords internal
 compute_ice_r = function(model, data, feature, grid, predict_fun = NULL,
   base_data_dt = NULL, stacked_pd_cache = NULL) {
   checkmate::assert_character(feature, len = 1L, .var.name = "feature")
@@ -121,6 +202,33 @@ compute_ice_r = function(model, data, feature, grid, predict_fun = NULL,
 }
 
 
+#' Compute ICE Matrix (C++ Backend)
+#'
+#' Uses \code{cpp_pd_stack_newdata} to build the stacked prediction table in C++,
+#' then runs \code{pd_predict}. Falls back to \code{compute_ice_r} for
+#' character or logical feature columns.
+#'
+#' @param model (`any`) \cr
+#'   Fitted model.
+#' @param data (`data.frame()` or `data.table()`) \cr
+#'   Feature data (target removed).
+#' @param feature (`character(1)`) \cr
+#'   Name of the focal feature.
+#' @param grid (`atomic vector`) \cr
+#'   Grid values for the focal feature.
+#' @param predict_fun (`function()` or `NULL`) \cr
+#'   Custom predict function; \code{NULL} = default.
+#' @param base_data_dt (`data.table()` or `NULL`) \cr
+#'   Pre-converted data.table; avoids repeated conversion.
+#' @param cols_list (`list()` or `NULL`) \cr
+#'   Pre-extracted column list of \code{base_data_dt}.
+#' @param feature_index (`integer(1)` or `NULL`) \cr
+#'   1-based column index of \code{feature} in \code{base_data_dt}.
+#'
+#' @return (`matrix`) \cr
+#'   Numeric matrix of shape \code{n_obs x length(grid)}.
+#'
+#' @keywords internal
 compute_ice_cpp = function(
   model, data, feature, grid, predict_fun = NULL,
   base_data_dt = NULL, cols_list = NULL, feature_index = NULL
@@ -165,6 +273,21 @@ compute_ice_cpp = function(
 }
 
 
+#' Build Feature Grid for Partial Dependence
+#'
+#' Returns grid values for a single feature column:
+#' factor levels (after \code{droplevels}), unique sorted values for character,
+#' or \code{n_grid} quantile-based numeric values.
+#'
+#' @param x (`vector`) \cr
+#'   Feature column from the training data.
+#' @param n_grid (`integer(1)`) \cr
+#'   Number of grid points for numeric features; ignored for factor/character.
+#'
+#' @return (`atomic vector`) \cr
+#'   Grid values: \code{character()} for factor/character, \code{numeric()} otherwise.
+#'
+#' @keywords internal
 pd_feature_grid = function(x, n_grid) {
   if (is.factor(x)) return(levels(droplevels(x)))
   if (is.character(x)) {
@@ -187,6 +310,23 @@ pd_feature_grid = function(x, n_grid) {
 }
 
 
+#' Pack ICE Matrix into Long-Format data.table
+#'
+#' Converts an \code{n_obs x length(grid)} ICE matrix into a long-format
+#' data.table with one row per (observation, grid value) pair.
+#'
+#' @param ice (`matrix`) \cr
+#'   ICE predictions; shape \code{n_obs x length(grid)}.
+#' @param feature (`character(1)`) \cr
+#'   Name of the focal feature; stored in the \code{.feature} column.
+#' @param grid (`atomic vector`) \cr
+#'   Grid values used for this feature; stored in the \code{.borders} column.
+#'
+#' @return (`data.table`) \cr
+#'   Columns: \code{.id} (observation index), \code{.type} (\code{"ice"}),
+#'   \code{.feature}, \code{.borders}, \code{.value} (prediction).
+#'
+#' @keywords internal
 pd_pack_ice_result = function(ice, feature, grid) {
   n_obs = nrow(ice)
   data.table::data.table(
@@ -199,6 +339,22 @@ pd_pack_ice_result = function(ice, feature, grid) {
 }
 
 
+#' Generate Predictions for New Data
+#'
+#' Calls \code{predict_fun} (or the default predict method) on \code{newdata}
+#' and extracts a numeric prediction vector via \code{extract_numeric_prediction}.
+#'
+#' @param model (`any`) \cr
+#'   Fitted model.
+#' @param newdata (`data.frame()` or `data.table()`) \cr
+#'   New observations to predict.
+#' @param predict_fun (`function()` or `NULL`) \cr
+#'   \code{function(model, data)} returning predictions; \code{NULL} = default.
+#'
+#' @return (`numeric()`) \cr
+#'   Numeric prediction vector of length \code{nrow(newdata)}.
+#'
+#' @keywords internal
 pd_predict = function(model, newdata, predict_fun = NULL) {
   fun = if (is.null(predict_fun)) pd_select_predict_fun(model) else predict_fun
   pred_raw = fun(model, newdata)
@@ -206,6 +362,19 @@ pd_predict = function(model, newdata, predict_fun = NULL) {
 }
 
 
+#' Select Predict Function for a Model
+#'
+#' Returns a two-argument \code{function(model, data)} suitable for prediction:
+#' if \code{model} is itself a function, wraps it directly; otherwise delegates
+#' to \code{default_predict_fun}.
+#'
+#' @param model (`any`) \cr
+#'   Fitted model or bare prediction function.
+#'
+#' @return (`function`) \cr
+#'   \code{function(model, data)} returning raw predictions.
+#'
+#' @keywords internal
 pd_select_predict_fun = function(model) {
   if (is.function(model)) {
     return(function(model, data) model(data))

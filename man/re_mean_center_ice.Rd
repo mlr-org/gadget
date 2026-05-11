@@ -27,3 +27,4 @@ Mean-center ICE matrices for a node. Given Y (list of effect matrices), grid (co
 idx: subsets rows by idx; sets non-grid columns to NA; subtracts row means.
 Returns list of mean-centered matrices.
 }
+\keyword{internal}

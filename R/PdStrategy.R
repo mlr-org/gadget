@@ -84,6 +84,8 @@ PdStrategy = R6::R6Class(
     #'   Sample indices in the node.
     #' @param grid (`list()`) \cr
     #'   Feature grids; required for PD.
+    #' @param is_child (`logical(1)`) \cr
+    #'   Ignored for PD; kept for API parity with \code{AleStrategy}.
     #' @return (`list()`) \cr
     #'   Mean-centered effect matrices.
     node_transform = function(Y, idx, grid, is_child = FALSE) {
