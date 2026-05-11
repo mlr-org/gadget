@@ -150,7 +150,7 @@ Node = R6::R6Class("Node", public = list(
     split_info = tryCatch({
       y_curr = self$strategy$node_transform(
         Y = Y, idx = self$subset_idx, grid = self$grid,
-        split_feature = if (!is.null(self$parent)) self$parent$split_feature else NULL
+        is_child = !is.null(self$parent)
       )
       self$find_best_split(Z, y_curr, min_node_size, n_quantiles)
     }, error = function(e) {

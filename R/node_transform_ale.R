@@ -1,7 +1,7 @@
 #' Node Transform ALE
 #'
 #' Subsets ALE effect data to the current node's row indices and recomputes
-#' per-interval statistics. When \code{split_feature} is non-\code{NULL},
+#' per-interval statistics. When \code{is_child} is \code{TRUE},
 #' forces \code{d_l = 0} for any feature whose values are constant in this node
 #' (single unique value).
 #'
@@ -9,13 +9,13 @@
 #'   ALE effect data per feature.
 #' @param idx (`integer()`) \cr
 #'   Sample indices in the current node.
-#' @param split_feature (`character(1)` or `NULL`) \cr
-#'   Feature used for splitting; \code{NULL} = no postprocessing.
+#' @param is_child (`logical(1)`) \cr
+#'   Whether the current node is a child node; \code{FALSE} skips constant-feature zeroing.
 #'
 #' @return (`list()`) \cr
 #'   Transformed ALE effects per feature.
 #'
-node_transform_ale = function(Y, idx, split_feature = NULL) {
+node_transform_ale = function(Y, idx, is_child = FALSE) {
   y_subset = lapply(names(Y), function(feat) {
     y_j = Y[[feat]]
     y_j = y_j[y_j$row_id %in% idx, ]
@@ -27,7 +27,7 @@ node_transform_ale = function(Y, idx, split_feature = NULL) {
     y_j
   })
   names(y_subset) = names(Y)
-  if (!is.null(split_feature)) {
+  if (is_child) {
     y_processed = lapply(names(y_subset), function(feat) {
       y_j = y_subset[[feat]]
       # Zero out d_l for constant features in this node (ALE undefined when all values equal)

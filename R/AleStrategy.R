@@ -127,20 +127,20 @@ AleStrategy = R6::R6Class(
     #'   Row indices in the node.
     #' @param grid (`list()` or `NULL`) \cr
     #'   Ignored for ALE; required by interface.
-    #' @param split_feature (`character(1)` or `NULL`) \cr
-    #'   Feature used for split.
+    #' @param is_child (`logical(1)`) \cr
+    #'   Whether the current node is a child node.
     #' @return (`list()`) \cr
     #'   Transformed ALE data.tables.
-    node_transform = function(Y, idx, grid = NULL, split_feature = NULL) {
+    node_transform = function(Y, idx, grid = NULL, is_child = FALSE) {
       assert_ale_effect_list(Y)
       checkmate::assert_integerish(idx, min.len = 1, .var.name = "idx")
       checkmate::assert_list(grid, null.ok = TRUE, .var.name = "grid")
-      checkmate::assert_character(split_feature, len = 1, null.ok = TRUE, .var.name = "split_feature")
+      checkmate::assert_flag(is_child, .var.name = "is_child")
 
       node_transform_ale(
         Y = Y,
         idx = idx,
-        split_feature = split_feature
+        is_child = is_child
       )
     },
 

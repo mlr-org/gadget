@@ -84,15 +84,12 @@ PdStrategy = R6::R6Class(
     #'   Sample indices in the node.
     #' @param grid (`list()`) \cr
     #'   Feature grids; required for PD.
-    #' @param split_feature (`character(1)` or `NULL`) \cr
-    #'   Ignored for PD; required by interface.
     #' @return (`list()`) \cr
     #'   Mean-centered effect matrices.
-    node_transform = function(Y, idx, grid, split_feature = NULL) {
+    node_transform = function(Y, idx, grid, is_child = FALSE) {
       checkmate::assert_list(Y, .var.name = "Y")
       checkmate::assert_list(grid, .var.name = "grid")
       checkmate::assert_integerish(idx, min.len = 1, .var.name = "idx")
-      checkmate::assert_character(split_feature, len = 1, null.ok = TRUE, .var.name = "split_feature")
       as_numeric_matrix = function(x) {
         x = as.matrix(x)
         storage.mode(x) = "double"
