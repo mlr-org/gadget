@@ -68,7 +68,7 @@ Node = R6::R6Class("Node", public = list(
   #' @param id_parent (`integer(1)` or `NULL`) \cr
   #'   Parent node id.
   #' @param child_type (`character(1)` or `NULL`) \cr
-  #'   Split direction (\code{"<="}, \code{">"}, \code{"=="}, \code{"!="}).
+  #'   Split direction (\code{"<="}, \code{">"}, \code{"=="}, \code{"!="}, or \code{"in"}).
   #' @param objective_value_parent (`numeric(1)` or `NULL`) \cr
   #'   Parent node's objective value.
   #' @param objective_value_j (`numeric()` or `NULL`) \cr
@@ -272,6 +272,7 @@ Node = R6::R6Class("Node", public = list(
       idx_left = self$subset_idx[which(left_mask)]
       idx_right = self$subset_idx[which(!left_mask)]
     } else if (is_categorical) {
+      split_groups = one_vs_rest_categorical_split_groups(z_split_feature, split_value)
       idx_left = self$subset_idx[which(z_sub == split_value)]
       idx_right = self$subset_idx[which(z_sub != split_value)]
     } else {
@@ -306,10 +307,8 @@ Node = R6::R6Class("Node", public = list(
     left_child = Node$new(
       id = 2 * self$id, depth = self$depth + 1,
       subset_idx = idx_left, grid = grid_info$grid_left, id_parent = self$id,
-      child_type = if (is_ale_categorical) {
+      child_type = if (is_categorical) {
         "in"
-      } else if (is.factor(z_split_feature)) {
-        "=="
       } else {
         "<="
       },
@@ -323,10 +322,8 @@ Node = R6::R6Class("Node", public = list(
     right_child = Node$new(
       id = 2 * self$id + 1, depth = self$depth + 1,
       subset_idx = idx_right, grid = grid_info$grid_right, id_parent = self$id,
-      child_type = if (is_ale_categorical) {
+      child_type = if (is_categorical) {
         "in"
-      } else if (is.factor(z_split_feature)) {
-        "!="
       } else {
         ">"
       },
@@ -341,7 +338,7 @@ Node = R6::R6Class("Node", public = list(
     left_child$parent$split_feature = right_child$parent$split_feature = split_feature
     left_child$parent$split_value = right_child$parent$split_value = split_value
     left_child$parent$int_imp = right_child$parent$int_imp = int_imp
-    if (is_ale_categorical) {
+    if (is_categorical) {
       left_child$parent$split_levels = split_groups$left_levels
       right_child$parent$split_levels = split_groups$right_levels
       left_child$parent$split_condition =

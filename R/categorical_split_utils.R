@@ -31,6 +31,16 @@ ordered_categorical_split_groups = function(x, split_value) {
   list(left_levels = left_levels, right_levels = right_levels, split_level_id = split_level_id)
 }
 
+one_vs_rest_categorical_split_groups = function(x, split_value) {
+  checkmate::assert_factor(x, .var.name = "x")
+  levels_x = levels(x)
+  split_level = as.character(split_value)
+  if (length(split_level) != 1L || !(split_level %in% levels_x)) {
+    cli::cli_abort("Categorical split value {.val {split_value}} is not a level of {.arg x}.")
+  }
+  list(left_levels = split_level, right_levels = setdiff(levels_x, split_level))
+}
+
 ordered_categorical_left_mask = function(x, split_value) {
   groups = ordered_categorical_split_groups(x, split_value)
   as.integer(x) <= groups$split_level_id

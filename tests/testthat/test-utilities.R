@@ -108,6 +108,37 @@ test_that("ALE categorical split helpers use ordered-prefix semantics", {
   expect_equal(as.character(grids$grid_right$cat), c("c", "c"))
 })
 
+test_that("PD categorical child conditions display category sets", {
+  x = factor(c("a", "b", "c", "b"), levels = c("a", "b", "c"))
+  strategy = list(
+    name = "pd",
+    get_child_objectives = function(...) {
+      list(
+        left_objective_value_j = c(cat = 1),
+        right_objective_value_j = c(cat = 1),
+        left_objective_value = 1,
+        right_objective_value = 1
+      )
+    }
+  )
+  node = gadget:::Node$new(
+    id = 1L, depth = 1L, subset_idx = seq_along(x), grid = list(cat = x),
+    objective_value = 10, objective_value_j = c(cat = 10), strategy = strategy
+  )
+
+  children = node$create_children(
+    z_split_feature = x,
+    Y = list(),
+    split_info = list(split_feature = "cat", split_value = "b", is_categorical = TRUE),
+    objective_value_root_j = c(cat = 10),
+    objective_value_root = 10,
+    impr_par = 0
+  )
+
+  expect_equal(children$left_child$parent$split_condition, "cat in {b}")
+  expect_equal(children$right_child$parent$split_condition, "cat in {a, c}")
+})
+
 test_that("mean_center_ice returns Y and grid from effect with results", {
   set.seed(1)
   effect = list(results = data.frame(
