@@ -264,7 +264,14 @@ Node = R6::R6Class("Node", public = list(
     is_categorical = split_info$is_categorical
     # Get indices for children
     z_sub = z_split_feature[self$subset_idx]
-    if (is_categorical) {
+    is_ale_categorical = is_ale_ordered_categorical_split(is_categorical, self$strategy)
+    split_groups = NULL
+    if (is_ale_categorical) {
+      split_groups = ordered_categorical_split_groups(z_split_feature, split_value)
+      left_mask = ordered_categorical_left_mask(z_sub, split_value)
+      idx_left = self$subset_idx[which(left_mask)]
+      idx_right = self$subset_idx[which(!left_mask)]
+    } else if (is_categorical) {
       idx_left = self$subset_idx[which(z_sub == split_value)]
       idx_right = self$subset_idx[which(z_sub != split_value)]
     } else {
@@ -299,7 +306,13 @@ Node = R6::R6Class("Node", public = list(
     left_child = Node$new(
       id = 2 * self$id, depth = self$depth + 1,
       subset_idx = idx_left, grid = grid_info$grid_left, id_parent = self$id,
-      child_type = if (is.factor(z_split_feature)) "==" else "<=",
+      child_type = if (is_ale_categorical) {
+        "in"
+      } else if (is.factor(z_split_feature)) {
+        "=="
+      } else {
+        "<="
+      },
       objective_value_parent = self$objective$value,
       objective_value = left_objective_value,
       objective_value_j = left_objective_value_j,
@@ -310,7 +323,13 @@ Node = R6::R6Class("Node", public = list(
     right_child = Node$new(
       id = 2 * self$id + 1, depth = self$depth + 1,
       subset_idx = idx_right, grid = grid_info$grid_right, id_parent = self$id,
-      child_type = if (is.factor(z_split_feature)) "!=" else ">",
+      child_type = if (is_ale_categorical) {
+        "in"
+      } else if (is.factor(z_split_feature)) {
+        "!="
+      } else {
+        ">"
+      },
       objective_value_parent = self$objective$value,
       objective_value = right_objective_value,
       objective_value_j = right_objective_value_j,
@@ -322,6 +341,14 @@ Node = R6::R6Class("Node", public = list(
     left_child$parent$split_feature = right_child$parent$split_feature = split_feature
     left_child$parent$split_value = right_child$parent$split_value = split_value
     left_child$parent$int_imp = right_child$parent$int_imp = int_imp
+    if (is_ale_categorical) {
+      left_child$parent$split_levels = split_groups$left_levels
+      right_child$parent$split_levels = split_groups$right_levels
+      left_child$parent$split_condition =
+        format_categorical_split_condition(split_feature, split_groups$left_levels)
+      right_child$parent$split_condition =
+        format_categorical_split_condition(split_feature, split_groups$right_levels)
+    }
 
     list(
       left_child = left_child,
@@ -346,8 +373,11 @@ Node = R6::R6Class("Node", public = list(
   create_child_grids = function(split_feature, split_value, is_categorical) {
     grid_left = self$grid
     grid_right = self$grid
-    if (split_feature %in% names(self$grid)) {
-      if (is_categorical) {
+    if (split_feature %in% names(self$grid) && length(self$grid[[split_feature]]) > 0L) {
+      if (is_ale_ordered_categorical_split(is_categorical, self$strategy)) {
+        grid_left_idx = ordered_categorical_left_mask(grid_left[[split_feature]], split_value)
+        grid_right_idx = !grid_left_idx
+      } else if (is_categorical) {
         grid_left_idx = grid_left[[split_feature]] == split_value
         grid_right_idx = grid_right[[split_feature]] != split_value
       } else {

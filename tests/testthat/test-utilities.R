@@ -93,6 +93,20 @@ test_that("order_categorical_levels returns factor with ordered levels", {
   expect_equal(length(levels(result_mds)), nlevels(x_cat))
 })
 
+test_that("ALE categorical split helpers use ordered-prefix semantics", {
+  x = factor(c("a", "a", "b", "b", "c", "c"), levels = c("a", "b", "c"), ordered = TRUE)
+  mask = gadget:::ordered_categorical_left_mask(x, "b")
+  expect_equal(mask, c(TRUE, TRUE, TRUE, TRUE, FALSE, FALSE))
+
+  strategy = list(name = "ale")
+  node = gadget:::Node$new(
+    id = 1L, depth = 1L, subset_idx = seq_along(x), grid = list(cat = x), strategy = strategy
+  )
+  grids = node$create_child_grids("cat", "b", is_categorical = TRUE)
+  expect_equal(as.character(grids$grid_left$cat), c("a", "a", "b", "b"))
+  expect_equal(as.character(grids$grid_right$cat), c("c", "c"))
+})
+
 test_that("mean_center_ice returns Y and grid from effect with results", {
   set.seed(1)
   effect = list(results = data.frame(

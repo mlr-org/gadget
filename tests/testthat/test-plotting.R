@@ -15,6 +15,23 @@ test_that("track_split_condition formats categorical splits without coercion war
   expect_equal(cond, "var_Structure = M")
 })
 
+test_that("track_split_condition displays ALE categorical prefix splits as level sets", {
+  left_child = list(
+    id = 2L, depth = 2L,
+    parent = list(id = 1L, split_condition = "var_Structure in {L, M}")
+  )
+  parent_node = list(
+    id = 1L,
+    depth = 1L,
+    parent = NULL,
+    split = list(feature = "var_Structure", value = "M"),
+    children = list(left_child = left_child, right_child = list(id = 3L))
+  )
+  tree = list(list(parent_node), list(left_child))
+  cond = gadget:::track_split_condition(left_child, tree)
+  expect_equal(cond, "var_Structure in {L, M}")
+})
+
 test_that("merge_ale_y_range_with_response expands ylim to overlaid response", {
   yr = list(ymin = -1, ymax = 1)
   out = gadget:::merge_ale_y_range_with_response(yr, c(5, 100))

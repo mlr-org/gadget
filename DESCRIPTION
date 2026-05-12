@@ -49,6 +49,7 @@ Collate:
     'EffectStrategy.R'
     'AleStrategy.R'
     'GadgetTree.R'
+    'categorical_split_utils.R'
     'Node.R'
     'PdStrategy.R'
     'RcppExports.R'

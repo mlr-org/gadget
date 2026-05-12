@@ -21,6 +21,17 @@
 #'
 #' @keywords internal
 extract_split_info = function(tree, split_benchmark = NULL) {
+  collapse_split_levels = function(x) {
+    if (is.null(x)) NA_character_ else format_split_level_set(x)
+  }
+  child_split_levels = function(node, child) {
+    child_node = node$children[[child]]
+    if (!is.list(child_node) || is.null(child_node$parent)) {
+      return(NA_character_)
+    }
+    collapse_split_levels(child_node$parent$split_levels)
+  }
+
   # Collect all importance$imp_j names
   all_intimp_names = unique(unlist(
     lapply(tree, function(depth) {
@@ -46,12 +57,19 @@ extract_split_info = function(tree, split_benchmark = NULL) {
         if (node$id == 1) "root" else if (node$id %% 2 == 0) "left" else "right",
       split_feature = if (is.null(node$split)) NA_character_ else as.character(node$split$feature),
       split_value = if (is.null(node$split)) NA else node$split$value,
+      split_levels_left = child_split_levels(node, "left_child"),
+      split_levels_right = child_split_levels(node, "right_child"),
       node_objective = if (is.null(node$objective$value)) NA else node$objective$value,
       int_imp = if (is.null(node$importance)) NA else round(node$importance$imp, 2),
       split_feature_parent = if (is.null(node$parent) || is.null(node$parent$split_feature))
         NA_character_ else as.character(node$parent$split_feature),
       split_value_parent = if (is.null(node$parent) || is.null(node$parent$split_value))
         NA else node$parent$split_value,
+      split_levels_parent = if (is.null(node$parent)) {
+        NA_character_
+      } else {
+        collapse_split_levels(node$parent$split_levels)
+      },
       objective_value_parent = if (is.null(node$parent) || is.null(node$parent$objective_value))
         NA else node$parent$objective_value,
       int_imp_parent = if (is.null(node$parent) || is.null(node$parent$int_imp)) NA else round(node$parent$int_imp, 2),
