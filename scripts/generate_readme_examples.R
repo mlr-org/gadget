@@ -4,7 +4,9 @@
 options(warn = -1)
 dir.create("figures", showWarnings = FALSE)
 unlink(Sys.glob("figures/ale_bike_depth*_node*.png"))
+unlink(Sys.glob("figures/ale_bike_depth*_id*.png"))
 unlink(Sys.glob("figures/pd_bike_depth*_node*.png"))
+unlink(Sys.glob("figures/pd_bike_depth*_id*.png"))
 unlink(Sys.glob("figures/split_info_*_bike.*"))
 
 devtools::load_all(".", quiet = TRUE)
@@ -53,7 +55,7 @@ save_readme_plots = function(plot_list, prefix) {
     depth_id = as.integer(sub("^Depth_", "", depth_name))
     for (node_name in names(nodes)) {
       node_id = plot_file_node_id(node_name)
-      fname = sprintf("figures/%s_bike_depth%d_node%d.png", prefix, depth_id, node_id)
+      fname = sprintf("figures/%s_bike_depth%d_id%d.png", prefix, depth_id, node_id)
       png(fname, width = 800, height = 500)
       print(nodes[[node_name]])
       dev.off()

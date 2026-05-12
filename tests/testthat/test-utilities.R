@@ -49,6 +49,7 @@ test_that("extract_split_info works with depth-based tree list", {
   expect_true(is.data.frame(result))
   expect_equal(nrow(result), 3)
   expect_true(all(c("depth", "id", "split_feature", "n_obs") %in% names(result)))
+  expect_false(any(c("split_levels_left", "split_levels_right", "split_levels_parent") %in% names(result)))
 })
 
 test_that("find_node_by_id finds node by id in flat node list", {

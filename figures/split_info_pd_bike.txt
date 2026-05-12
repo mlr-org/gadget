@@ -1,24 +1,24 @@
-  id depth n_obs node_type split_feature split_value split_levels_left
-1  1     1  1000      root    workingday           1              <NA>
-2  2     2   684      left          temp        0.51              <NA>
-3  3     2   316     right          temp        0.45              <NA>
-4  4     3   345      left          <NA>        <NA>              <NA>
-5  5     3   339     right          <NA>        <NA>              <NA>
-6  6     3   148      left          <NA>        <NA>              <NA>
-7  7     3   168     right          <NA>        <NA>              <NA>
-  split_levels_right node_objective int_imp int_imp_parent split_feature_parent
-1               <NA>     18716934.7    0.37             NA                 <NA>
-2               <NA>      7283100.6    0.32           0.37           workingday
-3               <NA>      4558235.1    0.21           0.37           workingday
-4               <NA>       508581.0      NA           0.32                 temp
-5               <NA>       694543.9      NA           0.32                 temp
-6               <NA>       271085.2      NA           0.21                 temp
-7               <NA>       268604.3      NA           0.21                 temp
-  split_value_parent split_levels_parent objective_value_parent is_final  time
-1               <NA>                <NA>                     NA    FALSE 0.007
-2                  1                <NA>               18716935    FALSE 0.005
-3                  1                <NA>               18716935    FALSE 0.003
-4               0.51                <NA>                7283101     TRUE    NA
-5               0.51                <NA>                7283101     TRUE    NA
-6               0.45                <NA>                4558235     TRUE    NA
-7               0.45                <NA>                4558235     TRUE    NA
+  id depth n_obs node_type split_feature split_value node_objective int_imp
+1  1     1  1000      root    workingday           1     18716934.7    0.37
+2  2     2   684      left          temp        0.51      7283100.6    0.32
+3  3     2   316     right          temp        0.45      4558235.1    0.21
+4  4     3   345      left          <NA>        <NA>       508581.0      NA
+5  5     3   339     right          <NA>        <NA>       694543.9      NA
+6  6     3   148      left          <NA>        <NA>       271085.2      NA
+7  7     3   168     right          <NA>        <NA>       268604.3      NA
+  int_imp_parent split_feature_parent split_value_parent objective_value_parent
+1             NA                 <NA>               <NA>                     NA
+2           0.37           workingday                  1               18716935
+3           0.37           workingday                  1               18716935
+4           0.32                 temp               0.51                7283101
+5           0.32                 temp               0.51                7283101
+6           0.21                 temp               0.45                4558235
+7           0.21                 temp               0.45                4558235
+  is_final  time
+1    FALSE 0.009
+2    FALSE 0.007
+3    FALSE 0.004
+4     TRUE    NA
+5     TRUE    NA
+6     TRUE    NA
+7     TRUE    NA
