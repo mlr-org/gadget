@@ -119,7 +119,7 @@ Grid values for each feature.}
 Parent node id.}
 
 \item{\code{child_type}}{(`character(1)` or `NULL`) \cr
-Split direction (\code{"<="}, \code{">"}, \code{"=="}, \code{"!="}).}
+Split direction (\code{"<="}, \code{">"}, \code{"=="}, \code{"!="}, or \code{"in"}).}
 
 \item{\code{objective_value_parent}}{(`numeric(1)` or `NULL`) \cr
 Parent node's objective value.}
