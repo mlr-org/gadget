@@ -28,8 +28,6 @@
 #'   Categorical order: \code{"mds"}, \code{"pca"}, \code{"random"}, \code{"raw"}.
 #' @field ale_engine (`character(1)`) \cr
 #'   ALE backend after \code{$fit()}: \code{"cpp"} or \code{"r"}.
-#' @field with_stab (`logical(1)`) \cr
-#'   Whether boundary-stabilized splits are enabled.
 #' @field effect (`list()` or `NULL`) \cr
 #'   Cached ALE effect used when \code{$plot()} omits \code{effect}.
 #'
@@ -58,7 +56,6 @@ AleStrategy = R6::R6Class(
     predict_fun = NULL,
     order_method = "raw",
     ale_engine = "cpp",
-    with_stab = FALSE,
     effect = NULL,
 
     #' @description
@@ -208,8 +205,7 @@ AleStrategy = R6::R6Class(
         Z = Z,
         effect = Y,
         min_node_size = min_node_size,
-        n_quantiles = n_quantiles,
-        with_stab = self$with_stab
+        n_quantiles = n_quantiles
       )
     },
 
@@ -270,8 +266,6 @@ AleStrategy = R6::R6Class(
     #'   Prediction function.
     #' @param order_method (`character(1)`) \cr
     #'   Categorical order.
-    #' @param with_stab (`logical(1)`) \cr
-    #'   Enable boundary stabilizer.
     #' @param ale_engine (`character(1)`) \cr
     #'   ALE engine: \code{"cpp"} or \code{"r"}; default \code{c("cpp", "r")} resolves to
     #'   \code{"cpp"} via \code{match.arg}.
@@ -280,7 +274,7 @@ AleStrategy = R6::R6Class(
     #'   The tree, invisibly.
     fit = function(tree, model, effect = NULL, data, target_feature_name,
       n_intervals = 10, feature_set = NULL, split_feature = NULL,
-      predict_fun = NULL, order_method = "raw", with_stab = FALSE, ale_engine = c("cpp", "r"), ...) {
+      predict_fun = NULL, order_method = "raw", ale_engine = c("cpp", "r"), ...) {
       checkmate::assert_r6(tree, classes = "GadgetTree", .var.name = "tree")
       checkmate::assert_data_frame(data, .var.name = "data")
       checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
@@ -291,8 +285,13 @@ AleStrategy = R6::R6Class(
       checkmate::assert_character(split_feature, null.ok = TRUE, .var.name = "split_feature")
       checkmate::assert_function(predict_fun, null.ok = TRUE, .var.name = "predict_fun")
       checkmate::assert_choice(order_method, c("mds", "pca", "random", "raw"), .var.name = "order_method")
-      checkmate::assert_flag(with_stab, .var.name = "with_stab")
       ale_engine = match.arg(ale_engine)
+      dots = list(...)
+      if ("with_stab" %in% names(dots)) {
+        cli::cli_abort(
+          "{.arg with_stab} has been retired. ALE split search now always uses the fast bias-corrected objective."
+        )
+      }
       if (is.null(model)) {
         cli::cli_abort("AleStrategy requires {.arg model} to be passed.")
       }
@@ -313,7 +312,6 @@ AleStrategy = R6::R6Class(
         self$predict_fun = predict_fun
         self$order_method = order_method
         self$ale_engine = ale_engine
-        self$with_stab = with_stab
         self$tree_ref = tree
         prepared_data = self$preprocess(model = model, effect = effect, data = data,
           target_feature_name = target_feature_name, n_intervals = n_intervals,

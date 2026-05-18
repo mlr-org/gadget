@@ -2,7 +2,7 @@
 % Please edit documentation in R/search_best_split_point_ale_with.R
 \name{search_best_split_point_ale_with}
 \alias{search_best_split_point_ale_with}
-\title{Find best ALE split point with boundary stabilizer.}
+\title{Slow reference ALE split point search with boundary stabilizer.}
 \usage{
 search_best_split_point_ale_with(
   z,

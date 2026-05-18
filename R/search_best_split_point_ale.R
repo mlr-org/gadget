@@ -100,7 +100,7 @@ search_best_split_point_ale = function(
   is_cand_t = plan$is_cand
 
   split_feat_j_arg = if (has_self_ale) split_feat_j else 0L
-  z_sorted_num = if (is.numeric(z_sorted)) as.numeric(z_sorted) else rep(0.0, n_obs)
+  z_sorted_num = if (is.numeric(z_sorted) || is.factor(z_sorted)) as.numeric(z_sorted) else rep(0.0, n_obs)
 
   cpp_res = ale_sweep_cpp(
     ord_idx = ord_idx,

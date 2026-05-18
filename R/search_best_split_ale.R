@@ -72,8 +72,6 @@ build_ale_interval_stats = function(effect, features) {
 #'   Minimum observations per node.
 #' @param n_quantiles (`integer(1)` or `NULL`) \cr
 #'   Quantiles for numeric split candidates.
-#' @param with_stab (`logical(1)`) \cr
-#'   Use boundary stabilizer.
 #'
 #' @return (`data.frame()`) \cr
 #'   Best split info with per-feature objective values.
@@ -81,35 +79,22 @@ build_ale_interval_stats = function(effect, features) {
 search_best_split_ale = function(
   Z, effect,
   min_node_size = 1L,
-  n_quantiles = NULL,
-  with_stab = FALSE
+  n_quantiles = NULL
 ) {
   split_feature_names = colnames(Z)
   if (is.null(split_feature_names)) cli::cli_abort("Z (split features) must have column names.")
   st_table = build_ale_interval_stats(effect, names(effect))
   # Per split_feature, compute best split once and capture per-feature vectors
   per_feature_res = lapply(split_feature_names, function(split_feat) {
-    if (with_stab) {
-      res = search_best_split_point_ale_with_cpp(
-        z = Z[[split_feat]],
-        effect = effect,
-        st_table = st_table,
-        split_feat = split_feat,
-        is_categorical = is.factor(Z[[split_feat]]),
-        n_quantiles = n_quantiles,
-        min_node_size = min_node_size
-      )
-    } else {
-      res = search_best_split_point_ale(
-        z = Z[[split_feat]],
-        effect = effect,
-        st_table = st_table,
-        split_feat = split_feat,
-        is_categorical = is.factor(Z[[split_feat]]),
-        n_quantiles = n_quantiles,
-        min_node_size = min_node_size
-      )
-    }
+    res = search_best_split_point_ale(
+      z = Z[[split_feat]],
+      effect = effect,
+      st_table = st_table,
+      split_feat = split_feat,
+      is_categorical = is.factor(Z[[split_feat]]),
+      n_quantiles = n_quantiles,
+      min_node_size = min_node_size
+    )
     res$split_feature = split_feat
     res$is_categorical = is.factor(Z[[split_feat]])
     res

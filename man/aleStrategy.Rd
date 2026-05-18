@@ -61,9 +61,6 @@ Categorical order: \code{"mds"}, \code{"pca"}, \code{"random"}, \code{"raw"}.}
 \item{\code{ale_engine}}{(`character(1)`) \cr
 ALE backend after \code{$fit()}: \code{"cpp"} or \code{"r"}.}
 
-\item{\code{with_stab}}{(`logical(1)`) \cr
-Whether boundary-stabilized splits are enabled.}
-
 \item{\code{effect}}{(`list()` or `NULL`) \cr
 Cached ALE effect used when \code{$plot()} omits \code{effect}.}
 }
@@ -345,7 +342,6 @@ Fit tree: preprocess, create root, split recursively.
   split_feature = NULL,
   predict_fun = NULL,
   order_method = "raw",
-  with_stab = FALSE,
   ale_engine = c("cpp", "r"),
   ...
 )}\if{html}{\out{</div>}}
@@ -380,9 +376,6 @@ Prediction function.}
 
 \item{\code{order_method}}{(`character(1)`) \cr
 Categorical order.}
-
-\item{\code{with_stab}}{(`logical(1)`) \cr
-Enable boundary stabilizer.}
 
 \item{\code{ale_engine}}{(`character(1)`) \cr
 ALE engine: \code{"cpp"} or \code{"r"}; default \code{c("cpp", "r")} resolves to

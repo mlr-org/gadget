@@ -1,4 +1,4 @@
-#' Find best ALE split point with boundary stabilizer.
+#' Slow reference ALE split point search with boundary stabilizer.
 #'
 #' Same params and return as \code{search_best_split_point_ale}.
 #'
@@ -297,7 +297,7 @@ search_best_split_point_ale_with = function(
   )
 }
 
-#' Find best ALE split point via C++ sweep (with optional stabilizer).
+#' Slow reference ALE split point search via C++ sweep.
 #'
 #' Same params and return as \code{search_best_split_point_ale}.
 #'
@@ -347,7 +347,7 @@ search_best_split_point_ale_with_cpp = function(
 
   split_feat_j_arg = if (has_self_ale) split_feat_j else 0L
   use_stab = !is_categorical && has_self_ale
-  z_sorted_num = if (is.numeric(z_sorted)) as.numeric(z_sorted) else rep(0.0, n_obs)
+  z_sorted_num = if (is.numeric(z_sorted) || is.factor(z_sorted)) as.numeric(z_sorted) else rep(0.0, n_obs)
 
   cpp_res = ale_sweep_cpp(
     ord_idx = ord_idx,

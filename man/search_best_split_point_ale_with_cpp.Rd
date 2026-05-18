@@ -2,7 +2,7 @@
 % Please edit documentation in R/search_best_split_point_ale_with.R
 \name{search_best_split_point_ale_with_cpp}
 \alias{search_best_split_point_ale_with_cpp}
-\title{Find best ALE split point via C++ sweep (with optional stabilizer).}
+\title{Slow reference ALE split point search via C++ sweep.}
 \usage{
 search_best_split_point_ale_with_cpp(
   z,

@@ -247,6 +247,134 @@ test_that("ale_sweep_cpp returns valid split for simple one-feature case", {
   expect_true(is.finite(result$best_risks_sum))
 })
 
+test_that("search_best_split_point_ale keeps self feature signal in fast path", {
+  skip_ale_cpp_if_unavailable()
+  dt = data.table::data.table(
+    row_id = 1:8,
+    feat_val = 1:8,
+    x_left = 1:8,
+    x_right = 1:8,
+    d_l = c(0, 0, 0, 0, 10, 10, 10, 10),
+    interval_index = rep(1L, 8)
+  )
+  dt[, int_n := .N, by = interval_index]
+  dt[, int_s1 := sum(d_l), by = interval_index]
+  dt[, int_s2 := sum(d_l^2), by = interval_index]
+  effect = list(x = dt)
+  st = gadget:::build_ale_interval_stats(effect, "x")
+
+  result = gadget:::search_best_split_point_ale(
+    z = 1:8,
+    effect = effect,
+    st_table = st,
+    split_feat = "x",
+    is_categorical = FALSE,
+    min_node_size = 2L
+  )
+
+  expect_equal(result$split_point, 4.5)
+  expect_equal(result$split_objective, -1200 / 7)
+  expect_equal(result$objective_value_j, 0)
+})
+
+test_that("search_best_split_point_ale zeroes self risk only on constant categorical children", {
+  skip_ale_cpp_if_unavailable()
+  z = factor(c("A", "A", "B", "B", "C", "C"), levels = c("A", "B", "C"))
+  dt = data.table::data.table(
+    row_id = 1:6,
+    feat_val = z,
+    x_left = z,
+    x_right = z,
+    d_l = c(0, 2, 0, 2, 8, 10),
+    interval_index = c(1L, 1L, 2L, 2L, 3L, 3L)
+  )
+  dt[, int_n := .N, by = interval_index]
+  dt[, int_s1 := sum(d_l), by = interval_index]
+  dt[, int_s2 := sum(d_l^2), by = interval_index]
+  effect = list(x = dt)
+  st = gadget:::build_ale_interval_stats(effect, "x")
+
+  result = gadget:::search_best_split_point_ale(
+    z = z,
+    effect = effect,
+    st_table = st,
+    split_feat = "x",
+    is_categorical = TRUE,
+    min_node_size = 2L
+  )
+
+  expect_equal(as.character(result$split_point), "A")
+  expect_equal(result$split_objective, -2)
+  expect_equal(result$left_objective_value_j, 0)
+  expect_equal(result$right_objective_value_j, 4)
+})
+
+test_that("ALE split prefers x3 on the interaction synthetic DGP", {
+  skip_ale_cpp_if_unavailable()
+  set.seed(1234)
+  n = 500L
+  x1 = runif(n, -1, 1)
+  x2 = runif(n, -1, 1)
+  x3 = runif(n, -1, 1)
+  data = data.frame(x1, x2, x3)
+  predict_fun = function(model, newdata) {
+    ifelse(newdata$x3 > 0, 3 * newdata$x1, -3 * newdata$x1) + newdata$x3
+  }
+  data$y = predict_fun(NULL, data)
+
+  prepared = gadget:::prepare_split_data_ale(
+    model = list(),
+    data = data,
+    target_feature_name = "y",
+    n_intervals = 10L,
+    predict_fun = predict_fun,
+    ale_engine = "cpp"
+  )
+  result = gadget:::search_best_split_ale(
+    Z = prepared$Z,
+    effect = prepared$Y,
+    min_node_size = 10L
+  )
+
+  expect_true(any(result$best_split))
+  expect_equal(result$split_feature[result$best_split][1], "x3")
+})
+
+test_that("ALE split keeps x3 as the first split on the example-style synthetic DGP", {
+  skip_ale_cpp_if_unavailable()
+  set.seed(1)
+  n = 1000L
+  x1 = round(runif(n, -1, 1), 1)
+  x2 = round(runif(n, -1, 1), 3)
+  x3 = factor(sample(c(0, 1), size = n, replace = TRUE, prob = c(0.5, 0.5)))
+  x4 = sample(c(0, 1), size = n, replace = TRUE, prob = c(0.7, 0.3))
+  x5 = sample(c(0, 1), size = n, replace = TRUE, prob = c(0.5, 0.5))
+  data = data.frame(x1, x2, x3, x4, x5)
+  predict_fun = function(model, newdata) {
+    0.2 * newdata$x1 - 8 * newdata$x2 +
+      ifelse(newdata$x3 == 0, 16 * newdata$x2, 0) +
+      ifelse(newdata$x1 > 0, 8 * newdata$x2, 0)
+  }
+  data$y = predict_fun(NULL, data)
+
+  prepared = gadget:::prepare_split_data_ale(
+    model = list(),
+    data = data,
+    target_feature_name = "y",
+    n_intervals = 10L,
+    predict_fun = predict_fun,
+    ale_engine = "cpp"
+  )
+  result = gadget:::search_best_split_ale(
+    Z = prepared$Z,
+    effect = prepared$Y,
+    min_node_size = 10L
+  )
+
+  expect_true(any(result$best_split))
+  expect_equal(result$split_feature[result$best_split][1], "x3")
+})
+
 test_that("ale_sweep_cpp returns Inf when no candidate splits", {
   skip_ale_cpp_if_unavailable()
   n = 6L
@@ -264,4 +392,24 @@ test_that("ale_sweep_cpp returns Inf when no candidate splits", {
   )
   expect_true(is.na(result$best_t))
   expect_true(is.infinite(result$best_risks_sum) && result$best_risks_sum > 0)
+})
+
+test_that("AleStrategy rejects the retired with_stab argument", {
+  tree = GadgetTree$new(strategy = AleStrategy$new(), n_split = 0L, min_node_size = 2L)
+  data = data.frame(
+    x1 = c(-1, 0, 1, 2),
+    x2 = c(0, 1, 0, 1),
+    y = c(0, 0, 0, 0)
+  )
+
+  expect_error(
+    tree$fit(
+      data = data,
+      target_feature_name = "y",
+      model = list(),
+      predict_fun = function(model, newdata) rep(0, nrow(newdata)),
+      with_stab = FALSE
+    ),
+    "with_stab.*retired"
+  )
 })

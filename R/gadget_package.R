@@ -31,7 +31,7 @@ utils::globalVariables(c(
 #'   \item Fit: \code{tree$fit(data, target_feature_name, ...)}\cr
 #'         Strategy-specific \code{...} arguments:\cr
 #'         \strong{AleStrategy}: \code{model} (required), \code{n_intervals = 10}, \code{predict_fun = NULL},
-#'         \code{order_method = "raw"}, \code{with_stab = FALSE}, \code{ale_engine} (default \code{"cpp"}).\cr
+#'         \code{order_method = "raw"}, and \code{ale_engine} (default \code{"cpp"}).\cr
 #'         \strong{PdStrategy}: either \code{effect}, or \code{model} with optional
 #'         \code{predict_fun}, \code{n_grid}, and \code{pd_engine} (default \code{"cpp"}).
 #'         Both accept \code{feature_set} and \code{split_feature}.\cr

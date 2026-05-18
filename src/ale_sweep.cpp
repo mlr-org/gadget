@@ -23,6 +23,11 @@ using namespace Rcpp;
  * With n = 20 the window is ~2 rows (10%), leaving ~18 "far" observations for
  * variance estimation -- the practical lower bound for a meaningful stabilizer. */
 static const int kMinSideForStab = 20;
+/* Fast-path self-bias correction:
+ * appendix-style expected self gain inside a crossed interval is about one
+ * within-interval variance unit, so subtract one sample-variance unit from
+ * the raw self gain before using it as a split bonus. */
+static const double kSelfBiasLambda = 1.0;
 
 // -----------------------------------------------------------------------------
 // risk_from_stats
@@ -35,6 +40,11 @@ static const int kMinSideForStab = 20;
 inline double risk_from_stats(double n, double s1, double s2) {
   if (n <= 1.0) return 0.0;
   return s2 - (s1 * s1) / n;
+}
+
+inline double sample_var_from_stats(double n, double s1, double s2) {
+  if (n <= 1.0) return 0.0;
+  return risk_from_stats(n, s1, s2) / (n - 1.0);
 }
 
 // -----------------------------------------------------------------------------
@@ -208,16 +218,21 @@ List ale_sweep_cpp(
 
   bool has_self_ale = (split_feat_j >= 1 && split_feat_j <= p);
 
-  /* Precompute d_l and interval_idx in sweep order for stabilizer. */
+  const double self_root_risk = has_self_ale ? r_risks[j0] : 0.0;
+
+  /* Precompute interval_idx (always needed for fast self-bias correction)
+   * and d_l (needed only for the boundary stabilizer) in sweep order. */
   NumericVector d_l_j_sorted(n_obs);
   IntegerVector interval_idx_sorted(n_obs);
   const int N = d_l_mat.ncol();
-  if (use_stabilizer && has_self_ale && z_sorted.size() >= (R_xlen_t)n_obs) {
+  if (has_self_ale && z_sorted.size() >= (R_xlen_t)n_obs) {
     for (int i = 0; i < n_obs; ++i) {
       int row = ord_idx[i] - 1;
       if (row < 0 || row >= N) stop("ord_idx contains invalid row index");
-      d_l_j_sorted[i] = d_l_mat(j0, row);
       interval_idx_sorted[i] = interval_idx_mat(j0, row);
+      if (use_stabilizer) {
+        d_l_j_sorted[i] = d_l_mat(j0, row);
+      }
     }
   }
   /* Sweep: at each t, move row ord_idx[t-1] from right to left. */
@@ -274,7 +289,14 @@ List ale_sweep_cpp(
     bool r_const = (z_sorted.size() >= (R_xlen_t)n_obs && std::abs(z_sorted[t] - z_sorted[n_obs - 1]) < 1e-15);
     bool do_stab = use_stabilizer && has_self_ale && !l_const && !r_const && t > kMinSideForStab && (n_obs - t) > kMinSideForStab;
 
-    /* Compute total objective: sum of risks, minus self-ALE risk, plus stabilizer adj. */
+    /* Compute total objective.
+     * Fast path: start from the old reduced objective (drop self-risk), then
+     * add back only a bias-corrected self bonus. This preserves the O(n) sweep,
+     * fixes the old "all candidates tie at 0" bug, and avoids the naive full
+     * objective's tendency to over-reward splits on the same feature.
+     *
+     * Stabilized path: keep the existing semantics, using the boundary-adjusted
+     * self-risk when the stabilizer is active. */
     double total = R_PosInf;
     double adj_left = 0.0, adj_right = 0.0;
 
@@ -282,12 +304,29 @@ List ale_sweep_cpp(
       total = risks_sum;
     } else {
       double self_risk = left_risks[j0] + right_risks[j0];
+      double drop = 0.0;
+      if (l_const) drop += left_risks[j0];
+      if (r_const) drop += right_risks[j0];
       if (!use_stabilizer) {
-        total = risks_sum - self_risk;
+        double other_risks = risks_sum - self_risk;
+        double self_risk_effective = self_risk - drop;
+        double delta_raw = self_root_risk - self_risk_effective;
+        double self_bias = 0.0;
+        bool cut_self_interval =
+          !l_const && !r_const &&
+          z_sorted.size() >= (R_xlen_t)n_obs &&
+          interval_idx_sorted[t - 1] == interval_idx_sorted[t];
+        if (cut_self_interval) {
+          int m_self = offsets[j0] + interval_idx_sorted[t - 1] - 1;
+          if (m_self >= 0 && m_self < M) {
+            self_bias = kSelfBiasLambda * sample_var_from_stats(
+              tot_n[m_self], tot_s1[m_self], tot_s2[m_self]
+            );
+          }
+        }
+        double delta_corr = std::max(0.0, delta_raw - self_bias);
+        total = other_risks - delta_corr;
       } else if (!do_stab) {
-        double drop = 0.0;
-        if (l_const) drop += left_risks[j0];
-        if (r_const) drop += right_risks[j0];
         total = risks_sum - drop;
       } else {
         NumericVector node_d_l_left(t);
@@ -321,8 +360,8 @@ List ale_sweep_cpp(
     /* For self-ALE feature: store adjusted risks (or 0 if dropped). */
     if (has_self_ale) {
       if (!use_stabilizer) {
-        best_left_risks[j0] = 0.0;
-        best_right_risks[j0] = 0.0;
+        if (l_const) best_left_risks[j0] = 0.0;
+        if (r_const) best_right_risks[j0] = 0.0;
       } else if (!do_stab) {
         if (l_const) best_left_risks[j0] = 0.0;
         if (r_const) best_right_risks[j0] = 0.0;

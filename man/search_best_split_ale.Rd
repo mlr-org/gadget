@@ -4,13 +4,7 @@
 \alias{search_best_split_ale}
 \title{Find best ALE split across features.}
 \usage{
-search_best_split_ale(
-  Z,
-  effect,
-  min_node_size = 1L,
-  n_quantiles = NULL,
-  with_stab = FALSE
-)
+search_best_split_ale(Z, effect, min_node_size = 1L, n_quantiles = NULL)
 }
 \arguments{
 \item{Z}{(`data.frame()` or `data.table()`) \cr
@@ -24,9 +18,6 @@ Minimum observations per node.}
 
 \item{n_quantiles}{(`integer(1)` or `NULL`) \cr
 Quantiles for numeric split candidates.}
-
-\item{with_stab}{(`logical(1)`) \cr
-Use boundary stabilizer.}
 }
 \value{
 (`data.frame()`) \cr

@@ -164,7 +164,7 @@ Features for splitting; \code{NULL} = all.}
 Strategy-specific arguments passed to \code{$fit()}.
 For [AleStrategy]: \code{model} or \code{effect}, plus optional
 \code{n_intervals}, \code{predict_fun}, \code{order_method},
-\code{ale_engine}, \code{with_stab}.
+and \code{ale_engine}.
 For [PdStrategy]: \code{effect}, or \code{model} with optional
 \code{predict_fun}, \code{n_grid}, and \code{pd_engine}.}
 }
