@@ -1,4 +1,4 @@
-# GADGET: General Additive Decomposition based on Global Effects
+# gadget: Regional Feature Effects for Better Model Explanations
 
 <!-- badges: start -->
 
