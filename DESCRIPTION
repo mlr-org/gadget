@@ -14,8 +14,9 @@ Description: Implements the GADGET (General Additive Decomposition based on Glob
     recursively partitions the feature space to minimize heterogeneity of
     feature effects (e.g., Accumulated Local Effects or Partial Dependence),
     producing a tree of regions where effects are more stable. It supports
-    both ALE and PD strategies, integrates with 'mlr3' and 'iml', and provides
-    visualization of the interaction tree and regional effect plots.
+    both ALE and PD strategies, works with 'mlr3' learners, accepts 'iml'-style
+    PD/ICE outputs for PD trees, and provides visualization of the interaction
+    tree and regional effect plots.
 License: MIT
 Depends: R (>= 4.3.0)
 URL: https://github.com/mlr-org/gadget

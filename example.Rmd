@@ -124,34 +124,49 @@ syn_tree_ale_model$plot(data = syn_data, target_feature_name = "y")
 data(Bikeshare)
 set.seed(123)
 bike = data.table(Bikeshare[sample(1:8645, 1000), ])
-bike[, workingday := as.factor((workingday))]
-# working and hr is factor
+# Treat discrete variables as factors where useful
+factor_cols = intersect(
+  c("season", "mnth", "hr", "holiday", "weekday", "workingday", "weathersit"),
+  names(bike)
+)
+bike[, (factor_cols) := lapply(.SD, as.factor), .SDcols = factor_cols]
 
-# bike_x = bike[, .(day, hr, temp, windspeed, weekday, workingday, hum, season, ...)]
-bike_x = bike[, .(hr, temp, workingday)]
-bike_y = bike$bikers
-train = cbind(bike_x, "target" = bike_y)
-bike_data = as.data.frame(train)
+# Use all non-leakage features
+feature_cols = setdiff(names(bike), c("casual", "registered", "bikers"))
+
+bike_data = as.data.frame(bike[, c(feature_cols, "bikers"), with = FALSE])
+names(bike_data)[names(bike_data) == "bikers"] = "target"
 
 set.seed(123)
 bike_task = TaskRegr$new(id = "bike", backend = bike_data, target = "target")
 bike_learner = lrn("regr.ranger")
 bike_learner$train(bike_task)
 
-bike_x = bike_task$data(cols = bike_task$feature_names)
+bike_x = as.data.frame(bike_task$data(cols = bike_task$feature_names))
 bike_y = bike_task$data(cols = bike_task$target_names)[[1]]
 
-bike_predictor = Predictor$new(model = bike_learner, data = bike_x, y = bike_y)
+bike_predictor = Predictor$new(
+  model = bike_learner,
+  data = bike_x,
+  y = bike_y,
+  predict.function = function(model, newdata) {
+    model$predict_newdata(newdata)$response
+  }
+)
 
-effect_all = FeatureEffects$new(bike_predictor, method = "ice",
-  grid.size = 20)
+effect_all = FeatureEffects$new(
+  bike_predictor,
+  features = bike_task$feature_names,
+  method = "ice",
+  grid.size = 20
+)
 ```
 
 ### ICE/PDP Method: Fit and visualize the explanation tree
 
 Mode A: precomputed iml effect
 ```{r}
-bike_tree_pd_effect = GadgetTree$new(strategy = PdStrategy$new(), n_split = 4)
+bike_tree_pd_effect = GadgetTree$new(strategy = PdStrategy$new(), n_split = 2)
 bike_tree_pd_effect$fit(data = bike_data, target_feature_name = "target", effect = effect_all)
 bike_tree_pd_effect$plot_tree_structure()
 bike_esi_pd_effect = bike_tree_pd_effect$extract_split_info()
