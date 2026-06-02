@@ -30,7 +30,7 @@ generate_one <- function(N, D, seed, outdir) {
 }
 
 parse_int_vec <- function(x) as.integer(strsplit(x, ",", fixed = TRUE)[[1L]])
-N_vec <- c(500L, 1000L, 5000L)
+N_vec <- c(1000L, 2500L, 5000L, 10000L)
 D_vec <- c(5L, 10L, 20L)
 i <- 1
 while (i <= length(args)) {

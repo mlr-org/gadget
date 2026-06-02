@@ -58,7 +58,7 @@ datadir = "simulation/data/global_r_runtime"
 outdir = "simulation/results/global_r_runtime"
 reps = 20L
 predict_reps = 20L
-N_vec = c(500L, 1000L, 2500L, 5000L)
+N_vec = c(1000L, 2500L, 5000L, 10000L)
 D_vec = c(5L, 10L, 20L)
 fixed_N = 1000L
 fixed_D = 10L
@@ -68,8 +68,10 @@ n_grid_vec = c(10L, 20L, 50L)
 n_intervals_vec = c(10L, 20L, 50L)
 fail_fast = FALSE
 model_types = c("rf", "toy")
+sub_experiments = c("vs_N", "vs_D", "vs_res")
 
 parse_int_vec = function(x) as.integer(strsplit(x, ",", fixed = TRUE)[[1L]])
+parse_chr_vec = function(x) trimws(strsplit(x, ",", fixed = TRUE)[[1L]])
 
 i = 1L
 while (i <= length(args)) {
@@ -106,6 +108,10 @@ while (i <= length(args)) {
   } else if (args[i] == "--models" && i < length(args)) {
     model_types = strsplit(args[i + 1L], ",", fixed = TRUE)[[1L]]
     model_types = trimws(model_types[nzchar(model_types)])
+    i = i + 2L
+  } else if (args[i] == "--sub-experiments" && i < length(args)) {
+    sub_experiments = parse_chr_vec(args[i + 1L])
+    sub_experiments = sub_experiments[nzchar(sub_experiments)]
     i = i + 2L
   } else {
     i = i + 1L
@@ -377,13 +383,19 @@ make_cells = function(spec) {
     )
   }
 
-  rbind(
-    do.call(rbind, lapply(N_vec, function(N) make_cell("vs_N", N, fixed_D,
-      if (is_pdp) default_n_grid else default_n_intervals))),
-    do.call(rbind, lapply(D_vec, function(D) make_cell("vs_D", fixed_N, D,
-      if (is_pdp) default_n_grid else default_n_intervals))),
-    do.call(rbind, lapply(res_vec, function(res) make_cell("vs_res", fixed_N, fixed_D, res)))
-  )
+  cells = list()
+  if ("vs_N" %in% sub_experiments) {
+    cells[[length(cells) + 1L]] = do.call(rbind, lapply(N_vec, function(N) make_cell("vs_N", N, fixed_D,
+      if (is_pdp) default_n_grid else default_n_intervals)))
+  }
+  if ("vs_D" %in% sub_experiments) {
+    cells[[length(cells) + 1L]] = do.call(rbind, lapply(D_vec, function(D) make_cell("vs_D", fixed_N, D,
+      if (is_pdp) default_n_grid else default_n_intervals)))
+  }
+  if ("vs_res" %in% sub_experiments) {
+    cells[[length(cells) + 1L]] = do.call(rbind, lapply(res_vec, function(res) make_cell("vs_res", fixed_N, fixed_D, res)))
+  }
+  do.call(rbind, cells)
 }
 
 record_row = function(

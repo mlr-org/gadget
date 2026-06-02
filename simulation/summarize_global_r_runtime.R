@@ -99,6 +99,7 @@ dt[, n_intervals := as.integer(fifelse(
 dt[, time_sec := as.numeric(time_sec)]
 dt[package == "ingredients", package := "DALEX/ingredients"]
 dt = dt[module == "global_r" & !(package == "gadget" & impl == "cpp")]
+dt = dt[!(sub_experiment == "vs_N" & N == 500L)]
 
 dt_ok = dt[status == "ok" & is.finite(time_sec)]
 if (nrow(dt_ok) == 0L) {

@@ -36,7 +36,7 @@ if [ "$MODE" = "smoke" ]; then
   FIGDIR="simulation/results/paper_figures_smoke"
   MODELS="${BENCHMARK_MODELS:-toy}"
 else
-  N_VEC="500,1000,2500,5000"
+  N_VEC="1000,2500,5000,10000"
   D_VEC="5,10,20"
   FIXED_N="1000"
   FIXED_D="10"
