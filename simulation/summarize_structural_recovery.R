@@ -31,9 +31,9 @@ library(data.table)
 library(ggplot2)
 
 variant_labels = c(
-  num_0 = "Numeric, no distractor",
-  num_04 = "Numeric, weak distractor",
-  cat = "Categorical moderator"
+  num_0 = "Numeric, balanced split",
+  num_04 = "Numeric, off-center split",
+  cat = "Categorical split"
 )
 method_labels = c(
   gadget_pdp = "gadget PDP",
