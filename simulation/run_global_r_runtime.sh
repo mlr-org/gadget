@@ -107,4 +107,4 @@ if [ "$MODE" = "publication" ] && [ -f "${FIGDIR}/global_r_methods.png" ]; then
 fi
 
 echo "Done. Global raw CSVs and summary.csv in ${OUTDIR}/; global figure in ${FIGDIR}/"
-echo "Use simulation/results/split_search_figures/regional_methods.png for the split-search benchmark figure."
+echo "Use simulation/summarize_split_search_runtime_large.R to regenerate the split-search benchmark figure."

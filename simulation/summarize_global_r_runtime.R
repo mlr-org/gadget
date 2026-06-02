@@ -145,15 +145,15 @@ plot_runtime = function(data, title, filename) {
     "PDP / Toy model"
   ))]
   data[, sweep_label := fcase(
-    sub_experiment == "vs_N", "Sample size N",
-    sub_experiment == "vs_D", "Feature dimension D",
-    sub_experiment == "vs_res", "PDP grid / ALE intervals",
+    sub_experiment == "vs_N", "Sample size N\nD = 10, resolution = 20",
+    sub_experiment == "vs_D", "Feature dimension D\nN = 1,000, resolution = 20",
+    sub_experiment == "vs_res", "PDP grid / ALE intervals\nN = 1,000, D = 10",
     default = sub_experiment
   )]
   data[, sweep_label := factor(sweep_label, levels = c(
-    "Sample size N",
-    "Feature dimension D",
-    "PDP grid / ALE intervals"
+    "Sample size N\nD = 10, resolution = 20",
+    "Feature dimension D\nN = 1,000, resolution = 20",
+    "PDP grid / ALE intervals\nN = 1,000, D = 10"
   ))]
   data[, x_value := fcase(
     sub_experiment == "vs_N", as.numeric(N),

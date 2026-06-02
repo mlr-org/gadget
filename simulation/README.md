@@ -18,6 +18,8 @@ The data and CSV results are regenerable and are ignored by git; the publication
 - `benchmark_legacy_full_runtime_gadget.R` and `benchmark_legacy_full_runtime_effector.py` are the legacy full efficiency benchmark scripts.
   Their default small-run outputs go to `results/legacy_full_runtime/`.
   Their completed large-grid raw outputs are kept in `results/split_search_runtime_large/` for traceability.
+- `summarize_split_search_runtime_large.R` regenerates the paper-facing split-search figure from the archived large-grid
+  summary and writes it to `results/split_search_figures/regional_methods.png`.
 - `benchmark_split_search_gadget.R` and `benchmark_split_search_effector.py` are optional split-search-only benchmark scripts.
 
 ## Results Kept for the Paper
