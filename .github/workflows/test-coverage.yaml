@@ -26,9 +26,22 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::covr
+          extra-packages: |
+            any::covr
+            any::xml2
           needs: coverage
 
       - name: Test coverage
-        run: covr::codecov(quiet = FALSE)
+        run: |
+          coverage = covr::package_coverage(quiet = FALSE)
+          print(coverage)
+          covr::to_cobertura(coverage, filename = "coverage.xml")
         shell: Rscript {0}
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          fail_ci_if_error: true
+          verbose: true
