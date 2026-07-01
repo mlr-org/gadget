@@ -1,7 +1,7 @@
 # Basic behavioral contract tests (no brittle symbol/existence checks)
 
 test_that("strategies satisfy contract: name and GadgetTree creation", {
-  library(gadget)
+  library(xplaineff)
   pd = PdStrategy$new()
   ale = AleStrategy$new()
   expect_equal(pd$name, "pd")
@@ -11,7 +11,7 @@ test_that("strategies satisfy contract: name and GadgetTree creation", {
 })
 
 test_that("GadgetTree$new rejects non-R6 strategy", {
-  library(gadget)
+  library(xplaineff)
   expect_error(
     GadgetTree$new(strategy = "not_r6", n_split = 2),
     "R6"
@@ -19,7 +19,7 @@ test_that("GadgetTree$new rejects non-R6 strategy", {
 })
 
 test_that("GadgetTree$fit rejects target_feature_name not in data", {
-  library(gadget)
+  library(xplaineff)
   tree = GadgetTree$new(strategy = PdStrategy$new(), n_split = 1)
   data = data.frame(x = 1:5, y = 1:5)
   expect_error(
@@ -29,7 +29,7 @@ test_that("GadgetTree$fit rejects target_feature_name not in data", {
 })
 
 test_that("PdStrategy fit rejects missing effect", {
-  library(gadget)
+  library(xplaineff)
   tree = GadgetTree$new(strategy = PdStrategy$new(), n_split = 1)
   data = data.frame(x = 1:5, y = 1:5)
   expect_error(
@@ -39,7 +39,7 @@ test_that("PdStrategy fit rejects missing effect", {
 })
 
 test_that("AleStrategy fit rejects missing model", {
-  library(gadget)
+  library(xplaineff)
   tree = GadgetTree$new(strategy = AleStrategy$new(), n_split = 1)
   data = data.frame(x = 1:5, y = 1:5)
   expect_error(

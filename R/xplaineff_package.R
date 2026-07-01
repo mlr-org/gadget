@@ -6,10 +6,10 @@ utils::globalVariables(c(
   "row_id", "feat_val"
 ))
 
-#' gadget: General Additive Decomposition Based on Global Effect Tree
+#' xplaineff: General Additive Decomposition Based on Global Effect Tree
 #'
 #' @description
-#' The **gadget** package implements the GADGET algorithm for interpretable
+#' The **xplaineff** package implements the GADGET algorithm for interpretable
 #' machine learning. It builds a tree by recursively partitioning the feature
 #' space to minimize the heterogeneity of feature effects (e.g., Accumulated
 #' Local Effects or Partial Dependence), so that within each region the
@@ -44,10 +44,10 @@ utils::globalVariables(c(
 #' For PD-based trees, either pass an effect object from
 #' \code{iml::FeatureEffects(..., method = "ice")} to
 #' \code{tree$fit(effect = ..., data = ..., target_feature_name = ...)},
-#' or pass a fitted model and let gadget compute PD/ICE internally.
+#' or pass a fitted model and let xplaineff compute PD/ICE internally.
 #'
-#' @name gadget-package
-#' @aliases gadget gadget-package
+#' @name xplaineff-package
+#' @aliases xplaineff xplaineff-package
 #' @seealso
 #' \code{\link{GadgetTree}}, \code{\link{AleStrategy}}, \code{\link{PdStrategy}}
 

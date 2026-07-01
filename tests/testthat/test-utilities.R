@@ -1,13 +1,13 @@
 test_that("convert_tree_to_list returns depth-based list", {
-  skip_if_not(exists("convert_tree_to_list", envir = asNamespace("gadget")),
+  skip_if_not(exists("convert_tree_to_list", envir = asNamespace("xplaineff")),
     "convert_tree_to_list not available")
   # Build a minimal root node (no children)
   grid = list(x = 1:5)
-  root = gadget:::Node$new(
+  root = xplaineff:::Node$new(
     id = 1, depth = 1, subset_idx = 1:10, grid = grid,
     id_parent = NULL, child_type = NULL
   )
-  tree_list = gadget:::convert_tree_to_list(root, max_depth = 2)
+  tree_list = xplaineff:::convert_tree_to_list(root, max_depth = 2)
   expect_true(is.list(tree_list))
   expect_true(length(tree_list) >= 1)
   expect_true(is.list(tree_list[[1]]))
@@ -45,7 +45,7 @@ test_that("extract_split_info works with depth-based tree list", {
     children = NULL
   )
   tree = list(list(node1), list(node2, node3))
-  result = gadget:::extract_split_info(tree)
+  result = xplaineff:::extract_split_info(tree)
   expect_true(is.data.frame(result))
   expect_equal(nrow(result), 3)
   expect_true(all(c("depth", "id", "split_feature", "n_obs") %in% names(result)))
@@ -57,9 +57,9 @@ test_that("find_node_by_id finds node by id in flat node list", {
   node2 = list(id = 2, id_parent = 1, depth = 2)
   node3 = list(id = 3, id_parent = 1, depth = 2)
   node_list = list(node1, node2, node3)
-  expect_equal(gadget:::find_node_by_id(node_list, 2)$id, 2)
-  expect_equal(gadget:::find_node_by_id(node_list, 1)$id, 1)
-  expect_null(gadget:::find_node_by_id(node_list, 99))
+  expect_equal(xplaineff:::find_node_by_id(node_list, 2)$id, 2)
+  expect_equal(xplaineff:::find_node_by_id(node_list, 1)$id, 1)
+  expect_null(xplaineff:::find_node_by_id(node_list, 99))
 })
 
 test_that("node_heterogeneity returns non-negative numeric vector", {
@@ -67,7 +67,7 @@ test_that("node_heterogeneity returns non-negative numeric vector", {
     matrix(rnorm(20), ncol = 2),
     matrix(rnorm(20), ncol = 2)
   )
-  result = gadget:::node_heterogeneity(Y)
+  result = xplaineff:::node_heterogeneity(Y)
   expect_true(is.numeric(result))
   expect_length(result, 2)
   expect_true(all(!is.na(result)))
@@ -81,13 +81,13 @@ test_that("order_categorical_levels returns factor with ordered levels", {
     y = rnorm(15)
   )
   x_cat = droplevels(data$cat)
-  result = gadget:::order_categorical_levels(
+  result = xplaineff:::order_categorical_levels(
     x_cat, data, feature = "cat", target_feature_name = "y", order_method = "raw"
   )
   expect_true(is.factor(result))
   expect_equal(length(result), length(x_cat))
   expect_true(all(levels(result) %in% levels(x_cat)))
-  result_mds = gadget:::order_categorical_levels(
+  result_mds = xplaineff:::order_categorical_levels(
     x_cat, data, feature = "cat", target_feature_name = "y", order_method = "mds"
   )
   expect_true(is.factor(result_mds))
@@ -113,7 +113,7 @@ test_that("order_categorical_levels uses half-L1 for categorical auxiliary featu
   )
   data$cat = factor(data$cat, levels = c("a", "b", "c"))
   x_cat = droplevels(data$cat)
-  ord = gadget:::order_categorical_levels(
+  ord = xplaineff:::order_categorical_levels(
     x_cat, data, feature = "cat", target_feature_name = "y", order_method = "mds"
   )
   expect_equal(levels(ord)[2L], "b")
@@ -121,11 +121,11 @@ test_that("order_categorical_levels uses half-L1 for categorical auxiliary featu
 
 test_that("ALE categorical split helpers use ordered-prefix semantics", {
   x = factor(c("a", "a", "b", "b", "c", "c"), levels = c("a", "b", "c"), ordered = TRUE)
-  mask = gadget:::ordered_categorical_left_mask(x, "b")
+  mask = xplaineff:::ordered_categorical_left_mask(x, "b")
   expect_equal(mask, c(TRUE, TRUE, TRUE, TRUE, FALSE, FALSE))
 
   strategy = list(name = "ale")
-  node = gadget:::Node$new(
+  node = xplaineff:::Node$new(
     id = 1L, depth = 1L, subset_idx = seq_along(x), grid = list(cat = x), strategy = strategy
   )
   grids = node$create_child_grids("cat", "b", is_categorical = TRUE)
@@ -146,7 +146,7 @@ test_that("PD categorical child conditions display category sets", {
       )
     }
   )
-  node = gadget:::Node$new(
+  node = xplaineff:::Node$new(
     id = 1L, depth = 1L, subset_idx = seq_along(x), grid = list(cat = x),
     objective_value = 10, objective_value_j = c(cat = 10), strategy = strategy
   )
@@ -172,7 +172,7 @@ test_that("mean_center_ice returns Y and grid from effect with results", {
     .type = "ice",
     .id = rep(1:2, 3)
   ))
-  result = gadget:::mean_center_ice(effect, feature_set = NULL, mean_center = TRUE)
+  result = xplaineff:::mean_center_ice(effect, feature_set = NULL, mean_center = TRUE)
   expect_true(is.list(result))
   expect_true("Y" %in% names(result))
   expect_true("grid" %in% names(result))
@@ -192,7 +192,7 @@ test_that("prepare_split_data_pd separates effect features from split features",
   ))
   data = data.frame(x1 = 1:3, x2 = 4:6, y = 7:9)
 
-  prepared = gadget:::prepare_split_data_pd(
+  prepared = xplaineff:::prepare_split_data_pd(
     effect = effect,
     data = data,
     target_feature_name = "y",
@@ -202,7 +202,7 @@ test_that("prepare_split_data_pd separates effect features from split features",
   expect_equal(names(prepared$Y), "x1")
   expect_equal(names(prepared$Z), "x2")
 
-  prepared_all_splits = gadget:::prepare_split_data_pd(
+  prepared_all_splits = xplaineff:::prepare_split_data_pd(
     effect = effect,
     data = data,
     target_feature_name = "y",

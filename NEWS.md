@@ -1,5 +1,6 @@
-# gadget 0.1.0
+# xplaineff 0.1.0
 
+- Package renamed to xplaineff for CRAN submission (no issue).
 - AleStrategy categorical splits now apply ordered-prefix partitions consistently in fitted trees and display category sets for those splits (no issue).
 - AleStrategy now accepts a bare prediction function as `model` in the default ALE prediction path (no issue).
 - AleStrategy split search now uses the bias-corrected self-gain ranking objective for ALE self-feature splits (no issue).

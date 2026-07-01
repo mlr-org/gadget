@@ -35,7 +35,7 @@ tree$fit(model = model, data = data, target_feature_name = "y")
 \code{\link{calculate_ale_heterogeneity_cpp}}
 }
 \section{Super class}{
-\code{\link[gadget:EffectStrategy]{gadget::EffectStrategy}} -> \code{AleStrategy}
+\code{\link[xplaineff:EffectStrategy]{xplaineff::EffectStrategy}} -> \code{AleStrategy}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

@@ -38,7 +38,7 @@ tree$plot(data = data, target_feature_name = "target", effect = effect)
 
 }
 \section{Super class}{
-\code{\link[gadget:EffectStrategy]{gadget::EffectStrategy}} -> \code{PdStrategy}
+\code{\link[xplaineff:EffectStrategy]{xplaineff::EffectStrategy}} -> \code{PdStrategy}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

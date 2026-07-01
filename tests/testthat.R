@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(gadget)
+library(xplaineff)
 
-test_check("gadget")
+test_check("xplaineff")

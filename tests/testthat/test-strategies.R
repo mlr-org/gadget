@@ -6,7 +6,7 @@ test_that("PdStrategy can be created", {
 
 test_that("PdStrategy find_best_split returns expected structure", {
   tryCatch({
-    gadget:::search_best_split_cpp(Z = data.frame(x = 1:5), Y = list(matrix(1:10, ncol = 2)), min_node_size = 2)
+    xplaineff:::search_best_split_cpp(Z = data.frame(x = 1:5), Y = list(matrix(1:10, ncol = 2)), min_node_size = 2)
   }, error = function(e) {
     if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE)) {
       testthat::skip("C++ symbols not loaded (install package with compile)")
@@ -46,7 +46,7 @@ test_that("AleStrategy can be created", {
 test_that("AleStrategy heterogeneity returns numeric for ALE-like list", {
   tryCatch({
     dt = data.table::data.table(row_id = 1:5, interval_index = rep(1L, 5), d_l = 0, int_n = 5L, int_s1 = 0, int_s2 = 0)
-    gadget:::calculate_ale_heterogeneity_list_cpp(list(x = dt))
+    xplaineff:::calculate_ale_heterogeneity_list_cpp(list(x = dt))
   }, error = function(e) {
     if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE)) {
       testthat::skip("ALE C++ symbols not loaded (install package with compile)")

@@ -44,7 +44,7 @@
 #' @details
 #' This class manages the overall tree structure and delegates effect-specific operations
 #' (such as splitting and plotting) to the provided strategy object. It is the main entry
-#' point for fitting and visualizing effect-based decision trees in the gadget package.
+#' point for fitting and visualizing effect-based decision trees in the xplaineff package.
 #'
 #' @examples
 #' \dontrun{

@@ -9,7 +9,7 @@ test_that("track_split_condition formats categorical splits without coercion war
   )
   tree = list(list(parent_node), list(left_child))
   expect_warning(
-    cond <- gadget:::track_split_condition(left_child, tree),
+    cond <- xplaineff:::track_split_condition(left_child, tree),
     regexp = NA
   )
   expect_equal(cond, "var_Structure = M")
@@ -28,13 +28,13 @@ test_that("track_split_condition displays ALE categorical prefix splits as level
     children = list(left_child = left_child, right_child = list(id = 3L))
   )
   tree = list(list(parent_node), list(left_child))
-  cond = gadget:::track_split_condition(left_child, tree)
+  cond = xplaineff:::track_split_condition(left_child, tree)
   expect_equal(cond, "var_Structure in {L, M}")
 })
 
 test_that("merge_ale_y_range_with_response expands ylim to overlaid response", {
   yr = list(ymin = -1, ymax = 1)
-  out = gadget:::merge_ale_y_range_with_response(yr, c(5, 100))
+  out = xplaineff:::merge_ale_y_range_with_response(yr, c(5, 100))
   expect_true(out$ymin <= -1)
   expect_true(out$ymax >= 100)
 })
@@ -42,7 +42,7 @@ test_that("merge_ale_y_range_with_response expands ylim to overlaid response", {
 test_that("calculate_y_range_ale_combined includes regional curve range", {
   global_curves = list(f = list(mean_effect = data.frame(d_l = c(0, 1))))
   regional_curves = list(f = list(mean_effect = data.frame(d_l = c(-10, 10))))
-  yr = gadget:::calculate_y_range_ale_combined(global_curves, regional_curves, NULL, NULL)
+  yr = xplaineff:::calculate_y_range_ale_combined(global_curves, regional_curves, NULL, NULL)
   expect_true(yr$ymin <= -10)
   expect_true(yr$ymax >= 10)
 })
@@ -57,7 +57,7 @@ test_that("track_split_condition rounds numeric split values", {
     children = list(left_child = left_child, right_child = list(id = 3L))
   )
   tree = list(list(parent_node), list(left_child))
-  cond = gadget:::track_split_condition(left_child, tree)
+  cond = xplaineff:::track_split_condition(left_child, tree)
   expect_equal(cond, "x1 <= 0.5")
 })
 
@@ -70,7 +70,7 @@ test_that("plot_tree_structure works", {
       list(id = 3, id_parent = 1, depth = 2, split_feature = NA, split_value = NA, subset_idx = 11:20)
     )
   )
-  plot_result = gadget:::plot_tree_structure(tree)
+  plot_result = xplaineff:::plot_tree_structure(tree)
   expect_true(inherits(plot_result, "gg"))
 })
 
@@ -86,7 +86,7 @@ test_that("plot_regional_pd is callable with valid prepared_data", {
   )
   origin_data = data.frame(x1 = c(0, 0.5, 1)[rep(1:3, length.out = n)], y = rnorm(n))
   p = tryCatch({
-    gadget:::plot_regional_pd(
+    xplaineff:::plot_regional_pd(
       prepared_data = prepared_data,
       origin_data = origin_data,
       target_feature_name = "y",
@@ -121,7 +121,7 @@ test_that("create_plots_for_depth names PD plots with node ids", {
     )
   )
 
-  plots = gadget:::create_plots_for_depth(
+  plots = xplaineff:::create_plots_for_depth(
     tree = tree,
     prepared_data = prepared_data,
     data = data,
@@ -146,7 +146,7 @@ test_that("ALE tree plot returns list", {
     row_id = seq_len(n), interval_index = rep(1L, n), d_l = 0, int_n = n, int_s1 = 0, int_s2 = 0
   )
   tryCatch(
-    gadget:::calculate_ale_heterogeneity_list_cpp(list(x = dt)),
+    xplaineff:::calculate_ale_heterogeneity_list_cpp(list(x = dt)),
     error = function(e) testthat::skip("ALE C++ not loaded")
   )
   set.seed(123)

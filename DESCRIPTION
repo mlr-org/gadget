@@ -1,4 +1,4 @@
-Package: gadget
+Package: xplaineff
 Type: Package
 Title: Decomposing Global Feature Effects Based on Feature Interactions
 Version: 0.1.0
@@ -63,8 +63,6 @@ Collate:
     'extract_split_info.R'
     'factor_to_numeric.R'
     'find_node_by_id.R'
-    'gadget_internal.R'
-    'gadget_package.R'
     'mean_center_ice.R'
     'node_heterogeneity.R'
     'node_transform_ale.R'
@@ -83,3 +81,5 @@ Collate:
     'search_best_split_ale.R'
     'search_best_split_point_ale.R'
     'track_split_condition.R'
+    'xplaineff_internal.R'
+    'xplaineff_package.R'

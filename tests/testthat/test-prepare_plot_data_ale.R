@@ -24,7 +24,7 @@ test_that("prepare_plot_data_ale: delta_aggr nrow equals mean_effect nrow for bi
       interval_index = c(1L, 1L, 1L, 2L, 2L, 2L)
     )
   )
-  out <- gadget:::prepare_plot_data_ale(eff, idx = NULL, features = "xf", mean_center = TRUE)
+  out <- xplaineff:::prepare_plot_data_ale(eff, idx = NULL, features = "xf", mean_center = TRUE)
   me <- out$xf$mean_effect
   da <- eff$xf[, list(d_l = mean(d_l, na.rm = TRUE)), by = c("interval_index", "x_left", "x_right")]
   expect_equal(nrow(me), nrow(da))
@@ -43,8 +43,8 @@ test_that("prepare_plot_data_ale idx drops one interval: fewer mean_effect rows"
       interval_index = c(1L, 1L, 1L, 2L, 2L, 2L)
     )
   )
-  full <- gadget:::prepare_plot_data_ale(eff, idx = NULL, features = "xf", mean_center = TRUE)
-  one <- gadget:::prepare_plot_data_ale(eff, idx = 1:3, features = "xf", mean_center = TRUE)
+  full <- xplaineff:::prepare_plot_data_ale(eff, idx = NULL, features = "xf", mean_center = TRUE)
+  one <- xplaineff:::prepare_plot_data_ale(eff, idx = 1:3, features = "xf", mean_center = TRUE)
   expect_true(nrow(one$xf$mean_effect) < nrow(full$xf$mean_effect))
 })
 
@@ -57,6 +57,6 @@ test_that("mean_center_ale maps sample d_l == 0 to NA before aggregation", {
     d_l = c(0, 0, 0.5, 0.5),
     interval_index = c(1L, 1L, 2L, 2L)
   )
-  out <- gadget:::mean_center_ale(data.table::copy(dt), mean_center = FALSE)
+  out <- xplaineff:::mean_center_ale(data.table::copy(dt), mean_center = FALSE)
   expect_true(nrow(out) >= 1L)
 })

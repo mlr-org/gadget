@@ -103,7 +103,7 @@ AleStrategy = R6::R6Class(
       checkmate::assert_choice(order_method, c("mds", "pca", "random", "raw"), .var.name = "order_method")
       if (!is.null(effect)) {
         cli::cli_abort(
-          "Direct ALE {.arg effect} input is not enabled yet; please pass {.arg model} and use gadget ALE."
+          "Direct ALE {.arg effect} input is not enabled yet; please pass {.arg model} and use xplaineff ALE."
         )
       }
       if (is.null(model)) {
@@ -299,7 +299,7 @@ AleStrategy = R6::R6Class(
       }
       if (!is.null(effect)) {
         cli::cli_abort(
-          "Direct ALE {.arg effect} input is not enabled yet; please pass {.arg model} and use gadget ALE."
+          "Direct ALE {.arg effect} input is not enabled yet; please pass {.arg model} and use xplaineff ALE."
         )
       }
 

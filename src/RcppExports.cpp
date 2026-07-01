@@ -13,7 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // cpp_ale_numeric_breaks
 NumericVector cpp_ale_numeric_breaks(NumericVector x, int n_intervals);
-RcppExport SEXP _gadget_cpp_ale_numeric_breaks(SEXP xSEXP, SEXP n_intervalsSEXP) {
+RcppExport SEXP _xplaineff_cpp_ale_numeric_breaks(SEXP xSEXP, SEXP n_intervalsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -25,7 +25,7 @@ END_RCPP
 }
 // cpp_ale_interval_index
 IntegerVector cpp_ale_interval_index(NumericVector x, NumericVector breaks);
-RcppExport SEXP _gadget_cpp_ale_interval_index(SEXP xSEXP, SEXP breaksSEXP) {
+RcppExport SEXP _xplaineff_cpp_ale_interval_index(SEXP xSEXP, SEXP breaksSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -37,7 +37,7 @@ END_RCPP
 }
 // cpp_ale_interval_aggregate
 List cpp_ale_interval_aggregate(NumericVector d_l, IntegerVector interval_index);
-RcppExport SEXP _gadget_cpp_ale_interval_aggregate(SEXP d_lSEXP, SEXP interval_indexSEXP) {
+RcppExport SEXP _xplaineff_cpp_ale_interval_aggregate(SEXP d_lSEXP, SEXP interval_indexSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -49,7 +49,7 @@ END_RCPP
 }
 // cpp_ale_numeric_finalize
 List cpp_ale_numeric_finalize(NumericVector preds_lower, NumericVector preds_upper, IntegerVector interval_index);
-RcppExport SEXP _gadget_cpp_ale_numeric_finalize(SEXP preds_lowerSEXP, SEXP preds_upperSEXP, SEXP interval_indexSEXP) {
+RcppExport SEXP _xplaineff_cpp_ale_numeric_finalize(SEXP preds_lowerSEXP, SEXP preds_upperSEXP, SEXP interval_indexSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -62,7 +62,7 @@ END_RCPP
 }
 // cpp_ale_numeric_effect_table
 List cpp_ale_numeric_effect_table(NumericVector feat_val, NumericVector x_left, NumericVector x_right, IntegerVector interval_index, NumericVector preds_lower, NumericVector preds_upper);
-RcppExport SEXP _gadget_cpp_ale_numeric_effect_table(SEXP feat_valSEXP, SEXP x_leftSEXP, SEXP x_rightSEXP, SEXP interval_indexSEXP, SEXP preds_lowerSEXP, SEXP preds_upperSEXP) {
+RcppExport SEXP _xplaineff_cpp_ale_numeric_effect_table(SEXP feat_valSEXP, SEXP x_leftSEXP, SEXP x_rightSEXP, SEXP interval_indexSEXP, SEXP preds_lowerSEXP, SEXP preds_upperSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -78,7 +78,7 @@ END_RCPP
 }
 // cpp_ale_categorical_finalize
 List cpp_ale_categorical_finalize(IntegerVector levels_id, NumericVector y_hat_plus, NumericVector y_hat_neg);
-RcppExport SEXP _gadget_cpp_ale_categorical_finalize(SEXP levels_idSEXP, SEXP y_hat_plusSEXP, SEXP y_hat_negSEXP) {
+RcppExport SEXP _xplaineff_cpp_ale_categorical_finalize(SEXP levels_idSEXP, SEXP y_hat_plusSEXP, SEXP y_hat_negSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -91,7 +91,7 @@ END_RCPP
 }
 // cpp_ale_categorical_effect_table
 List cpp_ale_categorical_effect_table(IntegerVector feat_val, IntegerVector x_left, IntegerVector x_right, IntegerVector interval_index, NumericVector y_hat_plus, NumericVector y_hat_neg);
-RcppExport SEXP _gadget_cpp_ale_categorical_effect_table(SEXP feat_valSEXP, SEXP x_leftSEXP, SEXP x_rightSEXP, SEXP interval_indexSEXP, SEXP y_hat_plusSEXP, SEXP y_hat_negSEXP) {
+RcppExport SEXP _xplaineff_cpp_ale_categorical_effect_table(SEXP feat_valSEXP, SEXP x_leftSEXP, SEXP x_rightSEXP, SEXP interval_indexSEXP, SEXP y_hat_plusSEXP, SEXP y_hat_negSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -107,7 +107,7 @@ END_RCPP
 }
 // cpp_ale_numeric_prepare
 List cpp_ale_numeric_prepare(NumericVector x, int n_intervals);
-RcppExport SEXP _gadget_cpp_ale_numeric_prepare(SEXP xSEXP, SEXP n_intervalsSEXP) {
+RcppExport SEXP _xplaineff_cpp_ale_numeric_prepare(SEXP xSEXP, SEXP n_intervalsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -119,7 +119,7 @@ END_RCPP
 }
 // cpp_ale_categorical_prepare
 List cpp_ale_categorical_prepare(IntegerVector levels_id, int n_levels);
-RcppExport SEXP _gadget_cpp_ale_categorical_prepare(SEXP levels_idSEXP, SEXP n_levelsSEXP) {
+RcppExport SEXP _xplaineff_cpp_ale_categorical_prepare(SEXP levels_idSEXP, SEXP n_levelsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -131,7 +131,7 @@ END_RCPP
 }
 // ale_sweep_cpp
 List ale_sweep_cpp(IntegerVector ord_idx, NumericMatrix d_l_mat, IntegerMatrix interval_idx_mat, IntegerVector offsets, NumericVector tot_n, NumericVector tot_s1, NumericVector tot_s2, NumericVector r_risks, LogicalVector is_cand, int min_node_size, int split_feat_j, NumericVector z_sorted, int n_obs);
-RcppExport SEXP _gadget_ale_sweep_cpp(SEXP ord_idxSEXP, SEXP d_l_matSEXP, SEXP interval_idx_matSEXP, SEXP offsetsSEXP, SEXP tot_nSEXP, SEXP tot_s1SEXP, SEXP tot_s2SEXP, SEXP r_risksSEXP, SEXP is_candSEXP, SEXP min_node_sizeSEXP, SEXP split_feat_jSEXP, SEXP z_sortedSEXP, SEXP n_obsSEXP) {
+RcppExport SEXP _xplaineff_ale_sweep_cpp(SEXP ord_idxSEXP, SEXP d_l_matSEXP, SEXP interval_idx_matSEXP, SEXP offsetsSEXP, SEXP tot_nSEXP, SEXP tot_s1SEXP, SEXP tot_s2SEXP, SEXP r_risksSEXP, SEXP is_candSEXP, SEXP min_node_sizeSEXP, SEXP split_feat_jSEXP, SEXP z_sortedSEXP, SEXP n_obsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -154,7 +154,7 @@ END_RCPP
 }
 // calculate_ale_heterogeneity_single_cpp
 double calculate_ale_heterogeneity_single_cpp(NumericVector d_l, IntegerVector interval_index);
-RcppExport SEXP _gadget_calculate_ale_heterogeneity_single_cpp(SEXP d_lSEXP, SEXP interval_indexSEXP) {
+RcppExport SEXP _xplaineff_calculate_ale_heterogeneity_single_cpp(SEXP d_lSEXP, SEXP interval_indexSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -166,7 +166,7 @@ END_RCPP
 }
 // calculate_ale_heterogeneity_list_cpp
 List calculate_ale_heterogeneity_list_cpp(List Y);
-RcppExport SEXP _gadget_calculate_ale_heterogeneity_list_cpp(SEXP YSEXP) {
+RcppExport SEXP _xplaineff_calculate_ale_heterogeneity_list_cpp(SEXP YSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -177,7 +177,7 @@ END_RCPP
 }
 // node_heterogeneity_cpp
 NumericVector node_heterogeneity_cpp(List Y);
-RcppExport SEXP _gadget_node_heterogeneity_cpp(SEXP YSEXP) {
+RcppExport SEXP _xplaineff_node_heterogeneity_cpp(SEXP YSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -188,7 +188,7 @@ END_RCPP
 }
 // cpp_pd_stack_newdata
 Rcpp::List cpp_pd_stack_newdata(Rcpp::List data_cols, int feature_index, SEXP grid);
-RcppExport SEXP _gadget_cpp_pd_stack_newdata(SEXP data_colsSEXP, SEXP feature_indexSEXP, SEXP gridSEXP) {
+RcppExport SEXP _xplaineff_cpp_pd_stack_newdata(SEXP data_colsSEXP, SEXP feature_indexSEXP, SEXP gridSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -201,7 +201,7 @@ END_RCPP
 }
 // re_mean_center_ice_cpp
 List re_mean_center_ice_cpp(List Y, List grid, IntegerVector idx);
-RcppExport SEXP _gadget_re_mean_center_ice_cpp(SEXP YSEXP, SEXP gridSEXP, SEXP idxSEXP) {
+RcppExport SEXP _xplaineff_re_mean_center_ice_cpp(SEXP YSEXP, SEXP gridSEXP, SEXP idxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -214,7 +214,7 @@ END_RCPP
 }
 // search_best_split_cpp
 DataFrame search_best_split_cpp(DataFrame Z, List Y, int min_node_size, Nullable<int> n_quantiles);
-RcppExport SEXP _gadget_search_best_split_cpp(SEXP ZSEXP, SEXP YSEXP, SEXP min_node_sizeSEXP, SEXP n_quantilesSEXP) {
+RcppExport SEXP _xplaineff_search_best_split_cpp(SEXP ZSEXP, SEXP YSEXP, SEXP min_node_sizeSEXP, SEXP n_quantilesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -228,26 +228,26 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_gadget_cpp_ale_numeric_breaks", (DL_FUNC) &_gadget_cpp_ale_numeric_breaks, 2},
-    {"_gadget_cpp_ale_interval_index", (DL_FUNC) &_gadget_cpp_ale_interval_index, 2},
-    {"_gadget_cpp_ale_interval_aggregate", (DL_FUNC) &_gadget_cpp_ale_interval_aggregate, 2},
-    {"_gadget_cpp_ale_numeric_finalize", (DL_FUNC) &_gadget_cpp_ale_numeric_finalize, 3},
-    {"_gadget_cpp_ale_numeric_effect_table", (DL_FUNC) &_gadget_cpp_ale_numeric_effect_table, 6},
-    {"_gadget_cpp_ale_categorical_finalize", (DL_FUNC) &_gadget_cpp_ale_categorical_finalize, 3},
-    {"_gadget_cpp_ale_categorical_effect_table", (DL_FUNC) &_gadget_cpp_ale_categorical_effect_table, 6},
-    {"_gadget_cpp_ale_numeric_prepare", (DL_FUNC) &_gadget_cpp_ale_numeric_prepare, 2},
-    {"_gadget_cpp_ale_categorical_prepare", (DL_FUNC) &_gadget_cpp_ale_categorical_prepare, 2},
-    {"_gadget_ale_sweep_cpp", (DL_FUNC) &_gadget_ale_sweep_cpp, 13},
-    {"_gadget_calculate_ale_heterogeneity_single_cpp", (DL_FUNC) &_gadget_calculate_ale_heterogeneity_single_cpp, 2},
-    {"_gadget_calculate_ale_heterogeneity_list_cpp", (DL_FUNC) &_gadget_calculate_ale_heterogeneity_list_cpp, 1},
-    {"_gadget_node_heterogeneity_cpp", (DL_FUNC) &_gadget_node_heterogeneity_cpp, 1},
-    {"_gadget_cpp_pd_stack_newdata", (DL_FUNC) &_gadget_cpp_pd_stack_newdata, 3},
-    {"_gadget_re_mean_center_ice_cpp", (DL_FUNC) &_gadget_re_mean_center_ice_cpp, 3},
-    {"_gadget_search_best_split_cpp", (DL_FUNC) &_gadget_search_best_split_cpp, 4},
+    {"_xplaineff_cpp_ale_numeric_breaks", (DL_FUNC) &_xplaineff_cpp_ale_numeric_breaks, 2},
+    {"_xplaineff_cpp_ale_interval_index", (DL_FUNC) &_xplaineff_cpp_ale_interval_index, 2},
+    {"_xplaineff_cpp_ale_interval_aggregate", (DL_FUNC) &_xplaineff_cpp_ale_interval_aggregate, 2},
+    {"_xplaineff_cpp_ale_numeric_finalize", (DL_FUNC) &_xplaineff_cpp_ale_numeric_finalize, 3},
+    {"_xplaineff_cpp_ale_numeric_effect_table", (DL_FUNC) &_xplaineff_cpp_ale_numeric_effect_table, 6},
+    {"_xplaineff_cpp_ale_categorical_finalize", (DL_FUNC) &_xplaineff_cpp_ale_categorical_finalize, 3},
+    {"_xplaineff_cpp_ale_categorical_effect_table", (DL_FUNC) &_xplaineff_cpp_ale_categorical_effect_table, 6},
+    {"_xplaineff_cpp_ale_numeric_prepare", (DL_FUNC) &_xplaineff_cpp_ale_numeric_prepare, 2},
+    {"_xplaineff_cpp_ale_categorical_prepare", (DL_FUNC) &_xplaineff_cpp_ale_categorical_prepare, 2},
+    {"_xplaineff_ale_sweep_cpp", (DL_FUNC) &_xplaineff_ale_sweep_cpp, 13},
+    {"_xplaineff_calculate_ale_heterogeneity_single_cpp", (DL_FUNC) &_xplaineff_calculate_ale_heterogeneity_single_cpp, 2},
+    {"_xplaineff_calculate_ale_heterogeneity_list_cpp", (DL_FUNC) &_xplaineff_calculate_ale_heterogeneity_list_cpp, 1},
+    {"_xplaineff_node_heterogeneity_cpp", (DL_FUNC) &_xplaineff_node_heterogeneity_cpp, 1},
+    {"_xplaineff_cpp_pd_stack_newdata", (DL_FUNC) &_xplaineff_cpp_pd_stack_newdata, 3},
+    {"_xplaineff_re_mean_center_ice_cpp", (DL_FUNC) &_xplaineff_re_mean_center_ice_cpp, 3},
+    {"_xplaineff_search_best_split_cpp", (DL_FUNC) &_xplaineff_search_best_split_cpp, 4},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_gadget(DllInfo *dll) {
+RcppExport void R_init_xplaineff(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

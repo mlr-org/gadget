@@ -2,66 +2,66 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 cpp_ale_numeric_breaks <- function(x, n_intervals) {
-    .Call(`_gadget_cpp_ale_numeric_breaks`, x, n_intervals)
+    .Call(`_xplaineff_cpp_ale_numeric_breaks`, x, n_intervals)
 }
 
 cpp_ale_interval_index <- function(x, breaks) {
-    .Call(`_gadget_cpp_ale_interval_index`, x, breaks)
+    .Call(`_xplaineff_cpp_ale_interval_index`, x, breaks)
 }
 
 cpp_ale_interval_aggregate <- function(d_l, interval_index) {
-    .Call(`_gadget_cpp_ale_interval_aggregate`, d_l, interval_index)
+    .Call(`_xplaineff_cpp_ale_interval_aggregate`, d_l, interval_index)
 }
 
 cpp_ale_numeric_finalize <- function(preds_lower, preds_upper, interval_index) {
-    .Call(`_gadget_cpp_ale_numeric_finalize`, preds_lower, preds_upper, interval_index)
+    .Call(`_xplaineff_cpp_ale_numeric_finalize`, preds_lower, preds_upper, interval_index)
 }
 
 cpp_ale_numeric_effect_table <- function(feat_val, x_left, x_right, interval_index, preds_lower, preds_upper) {
-    .Call(`_gadget_cpp_ale_numeric_effect_table`, feat_val, x_left, x_right, interval_index, preds_lower, preds_upper)
+    .Call(`_xplaineff_cpp_ale_numeric_effect_table`, feat_val, x_left, x_right, interval_index, preds_lower, preds_upper)
 }
 
 cpp_ale_categorical_finalize <- function(levels_id, y_hat_plus, y_hat_neg) {
-    .Call(`_gadget_cpp_ale_categorical_finalize`, levels_id, y_hat_plus, y_hat_neg)
+    .Call(`_xplaineff_cpp_ale_categorical_finalize`, levels_id, y_hat_plus, y_hat_neg)
 }
 
 cpp_ale_categorical_effect_table <- function(feat_val, x_left, x_right, interval_index, y_hat_plus, y_hat_neg) {
-    .Call(`_gadget_cpp_ale_categorical_effect_table`, feat_val, x_left, x_right, interval_index, y_hat_plus, y_hat_neg)
+    .Call(`_xplaineff_cpp_ale_categorical_effect_table`, feat_val, x_left, x_right, interval_index, y_hat_plus, y_hat_neg)
 }
 
 cpp_ale_numeric_prepare <- function(x, n_intervals) {
-    .Call(`_gadget_cpp_ale_numeric_prepare`, x, n_intervals)
+    .Call(`_xplaineff_cpp_ale_numeric_prepare`, x, n_intervals)
 }
 
 cpp_ale_categorical_prepare <- function(levels_id, n_levels) {
-    .Call(`_gadget_cpp_ale_categorical_prepare`, levels_id, n_levels)
+    .Call(`_xplaineff_cpp_ale_categorical_prepare`, levels_id, n_levels)
 }
 
 ale_sweep_cpp <- function(ord_idx, d_l_mat, interval_idx_mat, offsets, tot_n, tot_s1, tot_s2, r_risks, is_cand, min_node_size, split_feat_j, z_sorted, n_obs) {
-    .Call(`_gadget_ale_sweep_cpp`, ord_idx, d_l_mat, interval_idx_mat, offsets, tot_n, tot_s1, tot_s2, r_risks, is_cand, min_node_size, split_feat_j, z_sorted, n_obs)
+    .Call(`_xplaineff_ale_sweep_cpp`, ord_idx, d_l_mat, interval_idx_mat, offsets, tot_n, tot_s1, tot_s2, r_risks, is_cand, min_node_size, split_feat_j, z_sorted, n_obs)
 }
 
 calculate_ale_heterogeneity_single_cpp <- function(d_l, interval_index) {
-    .Call(`_gadget_calculate_ale_heterogeneity_single_cpp`, d_l, interval_index)
+    .Call(`_xplaineff_calculate_ale_heterogeneity_single_cpp`, d_l, interval_index)
 }
 
 calculate_ale_heterogeneity_list_cpp <- function(Y) {
-    .Call(`_gadget_calculate_ale_heterogeneity_list_cpp`, Y)
+    .Call(`_xplaineff_calculate_ale_heterogeneity_list_cpp`, Y)
 }
 
 node_heterogeneity_cpp <- function(Y) {
-    .Call(`_gadget_node_heterogeneity_cpp`, Y)
+    .Call(`_xplaineff_node_heterogeneity_cpp`, Y)
 }
 
 cpp_pd_stack_newdata <- function(data_cols, feature_index, grid) {
-    .Call(`_gadget_cpp_pd_stack_newdata`, data_cols, feature_index, grid)
+    .Call(`_xplaineff_cpp_pd_stack_newdata`, data_cols, feature_index, grid)
 }
 
 re_mean_center_ice_cpp <- function(Y, grid, idx) {
-    .Call(`_gadget_re_mean_center_ice_cpp`, Y, grid, idx)
+    .Call(`_xplaineff_re_mean_center_ice_cpp`, Y, grid, idx)
 }
 
 search_best_split_cpp <- function(Z, Y, min_node_size, n_quantiles = NULL) {
-    .Call(`_gadget_search_best_split_cpp`, Z, Y, min_node_size, n_quantiles)
+    .Call(`_xplaineff_search_best_split_cpp`, Z, Y, min_node_size, n_quantiles)
 }
 

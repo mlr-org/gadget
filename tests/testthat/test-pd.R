@@ -1,6 +1,6 @@
 test_that("compute_ice cpp matches r (numeric focal feature)", {
   tryCatch(
-    gadget:::cpp_pd_stack_newdata(as.list(data.frame(x = 1)), 0L, 1.0),
+    xplaineff:::cpp_pd_stack_newdata(as.list(data.frame(x = 1)), 0L, 1.0),
     error = function(e) {
       if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE)) {
         testthat::skip("C++ pd_fast not loaded")
@@ -14,14 +14,14 @@ test_that("compute_ice cpp matches r (numeric focal feature)", {
   fit = stats::lm(x3 ~ x1 + x2, data = d)
   x_only = d[, c("x1", "x2"), drop = FALSE]
   grid = seq(0.05, 0.95, length.out = 11L)
-  ice_r = gadget:::compute_ice_r(fit, x_only, "x1", grid, predict_fun = NULL)
-  ice_cpp = gadget:::compute_ice_cpp(fit, x_only, "x1", grid, predict_fun = NULL)
+  ice_r = xplaineff:::compute_ice_r(fit, x_only, "x1", grid, predict_fun = NULL)
+  ice_cpp = xplaineff:::compute_ice_cpp(fit, x_only, "x1", grid, predict_fun = NULL)
   testthat::expect_equal(ice_cpp, ice_r, tolerance = 1e-10)
 })
 
 test_that("compute_ice cpp matches r (factor focal feature)", {
   tryCatch(
-    gadget:::cpp_pd_stack_newdata(as.list(data.frame(x = 1)), 0L, 1L),
+    xplaineff:::cpp_pd_stack_newdata(as.list(data.frame(x = 1)), 0L, 1L),
     error = function(e) {
       if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE)) {
         testthat::skip("C++ pd_fast not loaded")
@@ -39,15 +39,15 @@ test_that("compute_ice cpp matches r (factor focal feature)", {
   fit = stats::lm(y ~ x1 + x2, data = d)
   x_only = d[, c("x1", "x2"), drop = FALSE]
   grid = levels(d$x1)
-  ice_r = gadget:::compute_ice_r(fit, x_only, "x1", grid, predict_fun = NULL)
-  ice_cpp = gadget:::compute_ice_cpp(fit, x_only, "x1", grid, predict_fun = NULL)
+  ice_r = xplaineff:::compute_ice_r(fit, x_only, "x1", grid, predict_fun = NULL)
+  ice_cpp = xplaineff:::compute_ice_cpp(fit, x_only, "x1", grid, predict_fun = NULL)
   testthat::expect_equal(ice_cpp, ice_r, tolerance = 1e-10)
 })
 
 test_that("compute_ice cpp matches r (ranger native model, data= predict)", {
   testthat::skip_if_not_installed("ranger")
   tryCatch(
-    gadget:::cpp_pd_stack_newdata(as.list(data.frame(x = 1)), 0L, 1.0),
+    xplaineff:::cpp_pd_stack_newdata(as.list(data.frame(x = 1)), 0L, 1.0),
     error = function(e) {
       if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE)) {
         testthat::skip("C++ pd_fast not loaded")
@@ -67,8 +67,8 @@ test_that("compute_ice cpp matches r (ranger native model, data= predict)", {
   )
   x_only = d[, c("x1", "x2"), drop = FALSE]
   grid = seq(0.1, 0.9, length.out = 9L)
-  ice_r = gadget:::compute_ice_r(fit, x_only, "x1", grid, predict_fun = NULL)
-  ice_cpp = gadget:::compute_ice_cpp(fit, x_only, "x1", grid, predict_fun = NULL)
+  ice_r = xplaineff:::compute_ice_r(fit, x_only, "x1", grid, predict_fun = NULL)
+  ice_cpp = xplaineff:::compute_ice_cpp(fit, x_only, "x1", grid, predict_fun = NULL)
   testthat::expect_equal(ice_cpp, ice_r, tolerance = 1e-10)
 })
 
@@ -94,14 +94,14 @@ test_that("AleStrategy fit aborts when target column is missing from data", {
 
 test_that("pd_feature_grid aborts for all-NA numeric predictor", {
   testthat::expect_error(
-    gadget:::pd_feature_grid(c(NA_real_, NA_real_), 5L),
+    xplaineff:::pd_feature_grid(c(NA_real_, NA_real_), 5L),
     regexp = "grid|quantiles|finite|NA"
   )
 })
 
 test_that("compute_ice cpp matches r for integer focal feature (C++ promotes stacked column to double)", {
   tryCatch(
-    gadget:::cpp_pd_stack_newdata(as.list(data.frame(x = 1)), 0L, 1.0),
+    xplaineff:::cpp_pd_stack_newdata(as.list(data.frame(x = 1)), 0L, 1.0),
     error = function(e) {
       if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE)) {
         testthat::skip("C++ pd_fast not loaded")
@@ -115,8 +115,8 @@ test_that("compute_ice cpp matches r for integer focal feature (C++ promotes sta
   fit = stats::lm(y ~ x1 + x2, data = d)
   x_only = d[, c("x1", "x2"), drop = FALSE]
   grid = sort(unique(d$x1))[1:3]
-  ice_r = gadget:::compute_ice_r(fit, x_only, "x1", grid, predict_fun = NULL)
-  ice_cpp = gadget:::compute_ice_cpp(fit, x_only, "x1", grid, predict_fun = NULL)
+  ice_r = xplaineff:::compute_ice_r(fit, x_only, "x1", grid, predict_fun = NULL)
+  ice_cpp = xplaineff:::compute_ice_cpp(fit, x_only, "x1", grid, predict_fun = NULL)
   testthat::expect_equal(ice_cpp, ice_r, tolerance = 1e-10)
 })
 
@@ -131,7 +131,7 @@ test_that("compute_ice_r preserves fractional grid values for cached integer fea
   )
 
   expect_warning({
-    ice = gadget:::compute_ice_r(
+    ice = xplaineff:::compute_ice_r(
       model = NULL,
       data = data,
       feature = "x",
@@ -156,7 +156,7 @@ test_that("extract_numeric_prediction uses response then first prob column for m
   lrn$train(task)
   pred = lrn$predict_newdata(iris[1:10, ])
   testthat::expect_equal(
-    gadget:::extract_numeric_prediction(pred),
+    xplaineff:::extract_numeric_prediction(pred),
     as.numeric(pred$response)
   )
 })
@@ -174,7 +174,7 @@ test_that("PdStrategy PD path can target one class prob via predict_fun", {
     p = model$predict_newdata(newdata)$prob[, "versicolor"]
     as.numeric(p)
   }
-  ice = gadget:::compute_ice_r(
+  ice = xplaineff:::compute_ice_r(
     lrn, dat[, c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width")],
     "Petal.Length", grid = c(1.4, 1.5), predict_fun = pf
   )
@@ -183,7 +183,7 @@ test_that("PdStrategy PD path can target one class prob via predict_fun", {
 })
 
 test_that("pd_feature_grid returns sorted unique levels for character x", {
-  g = gadget:::pd_feature_grid(c("b", "a", "a", NA), n_grid = 5L)
+  g = xplaineff:::pd_feature_grid(c("b", "a", "a", NA), n_grid = 5L)
   testthat::expect_equal(g, c("a", "b"))
 })
 
@@ -199,7 +199,7 @@ test_that("prepare_split_data_pd infers feature_set from precomputed effect", {
   ))
   data = data.frame(x = 1:3, z = 4:6, y = 7:9)
 
-  prepared = gadget:::prepare_split_data_pd(
+  prepared = xplaineff:::prepare_split_data_pd(
     effect = effect,
     data = data,
     target_feature_name = "y"
@@ -214,8 +214,8 @@ test_that("calculate_y_range for PD omits raw target when mean_center is TRUE", 
     x1 = data.frame(`0` = 0, `1` = 0.1, node = 1L, check.names = FALSE)
   )
   dat = data.frame(y = c(100, 100))
-  yr_mc = gadget:::calculate_y_range(prepared_data, dat, "y", mean_center = TRUE)
-  yr_raw = gadget:::calculate_y_range(prepared_data, dat, "y", mean_center = FALSE)
+  yr_mc = xplaineff:::calculate_y_range(prepared_data, dat, "y", mean_center = TRUE)
+  yr_raw = xplaineff:::calculate_y_range(prepared_data, dat, "y", mean_center = FALSE)
   testthat::expect_true(yr_mc$ymax < 50)
   testthat::expect_true(yr_raw$ymax >= 100)
 })

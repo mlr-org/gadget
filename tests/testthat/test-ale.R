@@ -7,7 +7,7 @@ test_that("calculate_ale returns named list of data.tables", {
   task = mlr3::TaskRegr$new("t", backend = data, target = "y")
   learner = mlr3::lrn("regr.ranger")
   learner$train(task)
-  result = gadget:::calculate_ale(
+  result = xplaineff:::calculate_ale(
     model = learner,
     data = data,
     feature_set = c("x1", "x2"),
@@ -31,7 +31,7 @@ test_that("calculate_ale_heterogeneity_cpp returns numeric", {
     d_l = rnorm(n),
     int_n = 5L, int_s1 = 0, int_s2 = 1
   )
-  result = gadget:::calculate_ale_heterogeneity_single_cpp(dt$d_l, dt$interval_index)
+  result = xplaineff:::calculate_ale_heterogeneity_single_cpp(dt$d_l, dt$interval_index)
   expect_true(is.numeric(result))
   expect_length(result, 1)
   expect_true(!is.na(result))
@@ -50,7 +50,7 @@ test_that("calculate_ale_heterogeneity_list_cpp works with list of ALE data", {
     d_l = rnorm(n), int_n = 3L, int_s1 = 0, int_s2 = 1
   )
   Y = list(f1 = dt1, f2 = dt2)
-  result = gadget:::calculate_ale_heterogeneity_list_cpp(Y)
+  result = xplaineff:::calculate_ale_heterogeneity_list_cpp(Y)
   # C++ returns a named list of scalars, not a numeric vector
   expect_true(is.list(result))
   expect_length(result, 2)
@@ -102,7 +102,7 @@ test_that("prepare_split_data_ale returns Z and Y", {
   task = mlr3::TaskRegr$new("t", backend = data, target = "y")
   learner = mlr3::lrn("regr.ranger")
   learner$train(task)
-  result = gadget:::prepare_split_data_ale(
+  result = xplaineff:::prepare_split_data_ale(
     model = learner,
     data = data,
     target_feature_name = "y",
@@ -130,7 +130,7 @@ test_that("prepare_split_data_ale r and cpp engines are numerically aligned", {
   learner = mlr3::lrn("regr.ranger")
   learner$train(task)
 
-  out_r = gadget:::prepare_split_data_ale(
+  out_r = xplaineff:::prepare_split_data_ale(
     model = learner,
     data = data,
     target_feature_name = "y",
@@ -139,7 +139,7 @@ test_that("prepare_split_data_ale r and cpp engines are numerically aligned", {
     split_feature = c("x1", "x2"),
     ale_engine = "r"
   )
-  out_cpp = gadget:::prepare_split_data_ale(
+  out_cpp = xplaineff:::prepare_split_data_ale(
     model = learner,
     data = data,
     target_feature_name = "y",
@@ -166,7 +166,7 @@ test_that("prepare_split_data_ale cpp engine works for non-mlr3 model", {
     y = rnorm(n)
   )
   model = ranger::ranger(y ~ ., data = data, num.trees = 50L, num.threads = 1L, seed = 12L)
-  out = gadget:::prepare_split_data_ale(
+  out = xplaineff:::prepare_split_data_ale(
     model = model,
     data = data,
     target_feature_name = "y",
@@ -184,7 +184,7 @@ test_that("calculate_ale returns zero d_l for constant numeric feature", {
   n = 15L
   data = data.frame(x_const = rep(2.5, n), y = seq_len(n))
   predict_fun = function(model, data) rep(0.0, nrow(data))
-  result = gadget:::calculate_ale(
+  result = xplaineff:::calculate_ale(
     model = NULL, data = data,
     feature_set = "x_const", target_feature_name = "y",
     predict_fun = predict_fun
@@ -197,7 +197,7 @@ test_that("calculate_ale returns zero d_l for single-level factor feature", {
   n = 12L
   data = data.frame(x_cat = factor(rep("a", n)), y = seq_len(n))
   predict_fun = function(model, data) rep(0.0, nrow(data))
-  result = gadget:::calculate_ale(
+  result = xplaineff:::calculate_ale(
     model = NULL, data = data,
     feature_set = "x_cat", target_feature_name = "y",
     predict_fun = predict_fun
@@ -211,7 +211,7 @@ test_that("calculate_ale preserves fractional interval bounds for integer featur
   predict_fun = function(model, data) as.numeric(data$x)
 
   expect_warning({
-    result_r = gadget:::calculate_ale(
+    result_r = xplaineff:::calculate_ale(
       model = NULL, data = data, feature_set = "x", target_feature_name = "y",
       n_intervals = 2L, predict_fun = predict_fun
     )
@@ -219,7 +219,7 @@ test_that("calculate_ale preserves fractional interval bounds for integer featur
     NA
   )
   expect_warning({
-    result_cpp = gadget:::calculate_ale_fast(
+    result_cpp = xplaineff:::calculate_ale_fast(
       model = NULL, data = data, feature_set = "x", target_feature_name = "y",
       n_intervals = 2L, predict_fun = predict_fun
     )
@@ -235,11 +235,11 @@ test_that("calculate_ale detaches custom predictions before restoring scratch da
   data = data.frame(x = as.numeric(1:4), y = 0)
   predict_fun = function(model, data) data$x
 
-  result_r = gadget:::calculate_ale(
+  result_r = xplaineff:::calculate_ale(
     model = NULL, data = data, feature_set = "x", target_feature_name = "y",
     n_intervals = 2L, predict_fun = predict_fun
   )
-  result_cpp = gadget:::calculate_ale_fast(
+  result_cpp = xplaineff:::calculate_ale_fast(
     model = NULL, data = data, feature_set = "x", target_feature_name = "y",
     n_intervals = 2L, predict_fun = predict_fun
   )
@@ -253,7 +253,7 @@ test_that("AleStrategy accepts a bare prediction function as model", {
   data = data.frame(x = as.numeric(1:4), y = 0)
   model = function(data) data$x
 
-  result = gadget:::prepare_split_data_ale(
+  result = xplaineff:::prepare_split_data_ale(
     model = model,
     data = data,
     target_feature_name = "y",
@@ -279,11 +279,11 @@ test_that("calculate_ale restores shared scratch data between features", {
   }
   features = c("x_num", "x_cat", "x_unused")
 
-  result_r = gadget:::calculate_ale(
+  result_r = xplaineff:::calculate_ale(
     model = NULL, data = data, feature_set = features, target_feature_name = "y",
     n_intervals = 2L, predict_fun = predict_fun
   )
-  result_cpp = gadget:::calculate_ale_fast(
+  result_cpp = xplaineff:::calculate_ale_fast(
     model = NULL, data = data, feature_set = features, target_feature_name = "y",
     n_intervals = 2L, predict_fun = predict_fun
   )
@@ -294,11 +294,11 @@ test_that("calculate_ale restores shared scratch data between features", {
 
 test_that("make_predictor normalizes custom prediction output and checks length", {
   predict_df = function(model, data) data.frame(pred = seq_len(nrow(data)))
-  predictor = gadget:::make_predictor(model = NULL, predict_fun = predict_df)
+  predictor = xplaineff:::make_predictor(model = NULL, predict_fun = predict_df)
   expect_equal(predictor$predict(data.frame(x = 1:3)), c(1, 2, 3))
 
   predict_bad = function(model, data) 1
-  predictor_bad = gadget:::make_predictor(model = NULL, predict_fun = predict_bad)
+  predictor_bad = xplaineff:::make_predictor(model = NULL, predict_fun = predict_bad)
   expect_error(
     predictor_bad$predict(data.frame(x = 1:3)),
     regexp = "Prediction length mismatch"
@@ -307,7 +307,7 @@ test_that("make_predictor normalizes custom prediction output and checks length"
 
 test_that("cpp_ale_numeric_prepare returns zero_effect for constant feature", {
   skip_ale_cpp_if_unavailable()
-  result = gadget:::cpp_ale_numeric_prepare(rep(1.0, 20L), n_intervals = 5L)
+  result = xplaineff:::cpp_ale_numeric_prepare(rep(1.0, 20L), n_intervals = 5L)
   expect_true(isTRUE(result$zero_effect))
 })
 
@@ -317,7 +317,7 @@ test_that("ale_sweep_cpp returns valid split for simple one-feature case", {
   # d_l: all 1 in interval 1 (obs 1-3), all -1 in interval 2 (obs 4-6)
   d_l_mat = matrix(c(1.0, 1.0, 1.0, -1.0, -1.0, -1.0), nrow = 1L)
   interval_idx_mat = matrix(c(1L, 1L, 1L, 2L, 2L, 2L), nrow = 1L)
-  result = gadget:::ale_sweep_cpp(
+  result = xplaineff:::ale_sweep_cpp(
     ord_idx = 1:6,
     d_l_mat = d_l_mat, interval_idx_mat = interval_idx_mat,
     offsets = 0L,
@@ -347,9 +347,9 @@ test_that("search_best_split_point_ale keeps corrected self feature signal", {
   dt[, int_s1 := sum(d_l), by = interval_index]
   dt[, int_s2 := sum(d_l^2), by = interval_index]
   effect = list(x = dt)
-  st = gadget:::build_ale_interval_stats(effect, "x")
+  st = xplaineff:::build_ale_interval_stats(effect, "x")
 
-  result = gadget:::search_best_split_point_ale(
+  result = xplaineff:::search_best_split_point_ale(
     z = 1:8,
     effect = effect,
     st_table = st,
@@ -378,9 +378,9 @@ test_that("search_best_split_point_ale zeroes self risk only on constant categor
   dt[, int_s1 := sum(d_l), by = interval_index]
   dt[, int_s2 := sum(d_l^2), by = interval_index]
   effect = list(x = dt)
-  st = gadget:::build_ale_interval_stats(effect, "x")
+  st = xplaineff:::build_ale_interval_stats(effect, "x")
 
-  result = gadget:::search_best_split_point_ale(
+  result = xplaineff:::search_best_split_point_ale(
     z = z,
     effect = effect,
     st_table = st,
@@ -408,7 +408,7 @@ test_that("ALE split prefers x3 on the interaction synthetic DGP", {
   }
   data$y = predict_fun(NULL, data)
 
-  prepared = gadget:::prepare_split_data_ale(
+  prepared = xplaineff:::prepare_split_data_ale(
     model = list(),
     data = data,
     target_feature_name = "y",
@@ -416,7 +416,7 @@ test_that("ALE split prefers x3 on the interaction synthetic DGP", {
     predict_fun = predict_fun,
     ale_engine = "cpp"
   )
-  result = gadget:::search_best_split_ale(
+  result = xplaineff:::search_best_split_ale(
     Z = prepared$Z,
     effect = prepared$Y,
     min_node_size = 10L
@@ -443,7 +443,7 @@ test_that("ALE split keeps x3 as the first split on the example-style synthetic 
   }
   data$y = predict_fun(NULL, data)
 
-  prepared = gadget:::prepare_split_data_ale(
+  prepared = xplaineff:::prepare_split_data_ale(
     model = list(),
     data = data,
     target_feature_name = "y",
@@ -451,7 +451,7 @@ test_that("ALE split keeps x3 as the first split on the example-style synthetic 
     predict_fun = predict_fun,
     ale_engine = "cpp"
   )
-  result = gadget:::search_best_split_ale(
+  result = xplaineff:::search_best_split_ale(
     Z = prepared$Z,
     effect = prepared$Y,
     min_node_size = 10L
@@ -466,7 +466,7 @@ test_that("ale_sweep_cpp returns Inf when no candidate splits", {
   n = 6L
   d_l_mat = matrix(c(1.0, 1.0, 1.0, -1.0, -1.0, -1.0), nrow = 1L)
   interval_idx_mat = matrix(c(1L, 1L, 1L, 2L, 2L, 2L), nrow = 1L)
-  result = gadget:::ale_sweep_cpp(
+  result = xplaineff:::ale_sweep_cpp(
     ord_idx = 1:6,
     d_l_mat = d_l_mat, interval_idx_mat = interval_idx_mat,
     offsets = 0L,

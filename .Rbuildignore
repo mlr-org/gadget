@@ -34,6 +34,8 @@
 ^figures$
 ^gadget\.Rcheck$
 ^gadget_.*\.tar\.gz$
+^xplaineff\.Rcheck$
+^xplaineff_.*\.tar\.gz$
 ^inst/extdata/.+\.R$
 ^local_attic$
 ^Makefile$

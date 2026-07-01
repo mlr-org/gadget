@@ -1,4 +1,4 @@
-# gadget: Regional Feature Effects for Better Model Explanations
+# xplaineff: Regional Feature Effects for Better Model Explanations
 
 <!-- badges: start -->
 
@@ -9,7 +9,7 @@
 
 <!-- badges: end -->
 
-The **gadget** R package implements the GADGET algorithm for interpretable machine learning. It recursively partitions the feature space to minimize the heterogeneity of feature effects (e.g., Accumulated Local Effects or Partial Dependence), producing a tree of regions where effects are more stable and easier to interpret. The package integrates with the [mlr3](https://mlr3.mlr-org.com/) ecosystem.
+The **xplaineff** R package implements the GADGET algorithm for interpretable machine learning. It recursively partitions the feature space to minimize the heterogeneity of feature effects (e.g., Accumulated Local Effects or Partial Dependence), producing a tree of regions where effects are more stable and easier to interpret. The package integrates with the [mlr3](https://mlr3.mlr-org.com/) ecosystem.
 
 ## Features
 
@@ -87,7 +87,7 @@ effects.
 ### PD + Bikeshare
 
 ```r
-library(gadget)
+library(xplaineff)
 library(mlr3)
 library(mlr3learners)
 library(ISLR2)
@@ -154,7 +154,7 @@ tree$plot(
 ### ALE + Bikeshare
 
 ```r
-library(gadget)
+library(xplaineff)
 library(mlr3)
 library(mlr3learners)
 library(ISLR2)
@@ -279,7 +279,7 @@ In practice, a common workflow is:
 
 ## Documentation
 
-- In R: `?gadget`, `?GadgetTree`, `?AleStrategy`, `?PdStrategy`
+- In R: `?xplaineff`, `?GadgetTree`, `?AleStrategy`, `?PdStrategy`
 - Paper draft: [`paper/`](paper/) (see `paper/README.md`)
 
 ## Citation

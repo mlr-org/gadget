@@ -127,7 +127,7 @@ wrap_tree_label = function(text, width = 34L) {
 #'
 #' Functions and symbols used internally by the package. Not intended for direct use.
 #'
-#' @name gadget_internal
+#' @name xplaineff_internal
 #' @aliases ale_sweep_cpp calculate_ale_heterogeneity_list_cpp
 #'   calculate_ale_heterogeneity_single_cpp re_mean_center_ice_cpp
 #'   search_best_split_cpp default_predict_fun predict_newdata_fast_dispatch
